@@ -98,11 +98,11 @@ if show_market_cap_chart:
         labels = [coin['name'] for coin in top_5_coins] + ['Others']
         sizes = [coin['market_cap'] for coin in top_5_coins] + [others_market_cap]
 
-        # Bitcoin 색상 설정 및 파이 차트 색상
-        pie_colors = ['blue'] + ['#66b3ff', '#99ff99', '#ffcc99', '#c2c2f0', '#ffb3e6']
+        # Bitcoin 색상 및 다른 조각 색상 설정
+        pie_colors = ['#1f77b4'] + ['#66b3ff', '#99ff99', '#ffcc99', '#c2c2f0', '#ffb3e6']
 
-        # 조각 간 간격 설정
-        explode = [0.1 if label == 'Bitcoin' else 0 for label in labels]  # Bitcoin만 10% 떨어뜨리기
+        # 모든 조각을 5%씩 분리
+        explode = [0.05 for _ in labels]
 
         # 폰트 및 스타일 설정
         font_size = 14  # 차트 폰트 크기
@@ -128,7 +128,8 @@ if show_market_cap_chart:
             startangle=140,
             colors=pie_colors,
             explode=explode,
-            shadow=True  # 그림자 추가
+            shadow=True,  # 그림자 추가
+            wedgeprops={'shadow': True, 'linewidth': 0.5, 'edgecolor': 'gray'}  # 그림자와 테두리 설정
         )
         ax.set_title('Market Cap Distribution: Top 5 Coins and Others', fontsize=title_font_size)
         st.pyplot(fig)
@@ -164,6 +165,7 @@ if show_market_cap_chart:
 
     except Exception as e:
         st.error(f"암호화폐 데이터를 불러오는 데 실패했습니다: {e}")
+
 
 ##########################################################
 
