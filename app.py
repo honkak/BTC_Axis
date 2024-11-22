@@ -12,6 +12,7 @@ from pycoingecko import CoinGeckoAPI
 import matplotlib.pyplot as plt
 import requests
 import ccxt
+from matplotlib import font_manager
 
 # 한글 폰트 설정 (경로 없이 이름만 사용)
 def set_korean_font():
