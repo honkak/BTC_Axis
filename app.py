@@ -271,10 +271,13 @@ st.markdown("---")
 
 #####################################
 #####################################
+#####################################
 # '김치프리미엄' 체크박스 추가
-show_kimchi_premium = st.checkbox("김치프리미엄1 보기")
+show_kimchi_premium = st.checkbox("김치프리미엄 보기")
 
 if show_kimchi_premium:
+    from pycoingecko import CoinGeckoAPI
+
     try:
         # 김치프리미엄 계산 기간 (현재 시점부터 1년 전)
         end_date = datetime.datetime.now()
@@ -287,40 +290,31 @@ if show_kimchi_premium:
         df_upbit["Date"] = pd.to_datetime(df_upbit["timestamp"], unit="ms")
         df_upbit.set_index("Date", inplace=True)
 
-        # 바이낸스 BTC 가격 가져오기
-        binance = ccxt.binance()
-        binance_data = binance.fetch_ohlcv("BTC/USDT", timeframe="1d", since=int(start_date.timestamp() * 1000), limit=200)
-        df_binance = pd.DataFrame(binance_data, columns=["timestamp", "open", "high", "low", "close", "volume"])
-        df_binance["Date"] = pd.to_datetime(df_binance["timestamp"], unit="ms")
-        df_binance.set_index("Date", inplace=True)
-
-        # 두 데이터프레임 병합
-        df_merged = pd.merge(
-            df_upbit[["close"]],
-            df_binance[["close"]],
-            left_index=True,
-            right_index=True,
-            suffixes=("_krw", "_usdt"),
-            how="inner"
-        )
+        # CoinGecko를 통해 글로벌 BTC 가격 (USD) 가져오기
+        cg = CoinGeckoAPI()
+        global_btc_price_usd = cg.get_price(ids='bitcoin', vs_currencies='usd')['bitcoin']['usd']
 
         # 원-달러 환율 가져오기
         exchange_rate_api = "https://api.exchangerate-api.com/v4/latest/USD"
         response = requests.get(exchange_rate_api)
+        response.raise_for_status()
         exchange_rate_data = response.json()
         krw_usd_rate = exchange_rate_data["rates"]["KRW"]
 
+        # 글로벌 BTC 가격을 원화로 변환
+        global_btc_price_krw = global_btc_price_usd * krw_usd_rate
+
         # 김치프리미엄 계산
-        df_merged["binance_krw"] = df_merged["close_usdt"] * krw_usd_rate
-        df_merged["kimchi_premium"] = ((df_merged["close_krw"] - df_merged["binance_krw"]) / df_merged["binance_krw"]) * 100
+        df_upbit["global_price_krw"] = global_btc_price_krw
+        df_upbit["kimchi_premium"] = ((df_upbit["close"] - df_upbit["global_price_krw"]) / df_upbit["global_price_krw"]) * 100
 
         # 결과 출력
         st.write("김치프리미엄 데이터 (최근 1년)")
-        st.dataframe(df_merged[["close_krw", "binance_krw", "kimchi_premium"]])
+        st.dataframe(df_upbit[["close", "global_price_krw", "kimchi_premium"]])
 
         # 김치프리미엄 꺾은선 그래프 생성
         fig, ax = plt.subplots(figsize=(10, 5))
-        ax.plot(df_merged.index, df_merged["kimchi_premium"], label="Kimchi Premium (%)", color="orange")
+        ax.plot(df_upbit.index, df_upbit["kimchi_premium"], label="Kimchi Premium (%)", color="orange")
         ax.set_title("Kimchi Premium Over Time (Last 1 Year)", fontsize=16)
         ax.set_xlabel("Date", fontsize=12)
         ax.set_ylabel("Kimchi Premium (%)", fontsize=12)
@@ -335,7 +329,7 @@ if show_kimchi_premium:
 
 ########
 # '김치프리미엄' 체크박스 추가
-show_kimchi_premium = st.checkbox("김치프리미엄 보기")
+show_kimchi_premium = st.checkbox("김치프리미엄1 보기")
 
 if show_kimchi_premium:
     try:
