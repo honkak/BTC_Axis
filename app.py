@@ -13,11 +13,10 @@ import matplotlib.pyplot as plt
 import requests
 import ccxt
 
-# 한글 폰트 설정
+# Windows 기본 한글 폰트 설정
 def set_korean_font():
     try:
-        font_path = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"  # 예시: Nanum Gothic
-        font_prop = font_manager.FontProperties(fname=font_path)
+        font_prop = font_manager.FontProperties(fname="C:\\Windows\\Fonts\\malgun.ttf")
         matplotlib.rc('font', family=font_prop.get_name())
         plt.rcParams['axes.unicode_minus'] = False  # 마이너스 기호 깨짐 방지
     except Exception as e:
