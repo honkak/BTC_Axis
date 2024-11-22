@@ -162,7 +162,7 @@ st.markdown("---")
 #####################################
 
 # 'BTC 시가총액 비율' 체크박스
-show_market_cap_chart = st.checkbox("BTC 시가총액 비율")
+show_market_cap_chart = st.checkbox("BTC 시가총액 비율(최근 1년)")
 
 if show_market_cap_chart:
     cg = CoinGeckoAPI()
@@ -217,7 +217,7 @@ if show_market_cap_chart:
             colors=pie_colors,
             explode=explode
         )
-        ax.set_title('Market Cap Distribution: Top 5 Coins and Others', fontsize=title_font_size)
+        ax.set_title('Market Cap Distribution(Now)', fontsize=title_font_size)
         st.pyplot(fig)
 
         # 365일 전부터 현재까지 BTC 도미넌스 데이터 가져오기
@@ -240,7 +240,7 @@ if show_market_cap_chart:
         # 꺾은선 그래프 생성
         fig, ax = plt.subplots(figsize=(10, 5))
         ax.plot(dominance_dates, dominance_values, label="BTC Dominance (%)", color="green")  # 녹색 꺾은선 그래프
-        ax.set_title("BTC Dominance Over Time", fontsize=title_font_size)
+        ax.set_title("BTC Dominance Over Time (Last 1 Year)", fontsize=title_font_size)
         ax.set_xlabel("Date", fontsize=axis_font_size)
         ax.set_ylabel("BTC Dominance (%)", fontsize=axis_font_size)
         ax.set_ylim(0, 100)  # Y축 범위 0% ~ 100%
