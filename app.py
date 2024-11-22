@@ -329,7 +329,8 @@ if show_kimchi_premium:
         fig, ax = plt.subplots(figsize=(12, 6))
         ax.plot(df.index, df["Kimchi Premium (%)"], label="Kimchi Premium (%)", color="blue")
         ax.axhline(0, color="red", linestyle="--", label="Parity Line (0%)")
-        ax.set_title("Kimchi Premium Over Last 1 Year (Upbit vs CoinGecko)")
+        ax.set_title(f"Kimchi Premium Over Last 1 Year ({start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')})")
+
         ax.set_xlabel("Date")
         ax.set_ylabel("Kimchi Premium (%)")
         ax.legend()
