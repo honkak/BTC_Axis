@@ -162,7 +162,7 @@ st.markdown("---")
 #####################################
 
 # 'BTC 시가총액 비율' 체크박스
-show_market_cap_chart = st.checkbox("BTC 시가총액 비율(최근 1년)")
+show_market_cap_chart = st.checkbox("BTC 시가총액 비율")
 
 if show_market_cap_chart:
     cg = CoinGeckoAPI()
@@ -237,10 +237,19 @@ if show_market_cap_chart:
             for price in btc_dominance_data['market_caps']
         ]
 
+        # 강제 기간: 365일 전부터 현재 날짜까지
+        end_date = datetime.datetime.now()
+        start_date = end_date - datetime.timedelta(days=365)
+        
+        # 날짜를 문자열로 포맷
+        start_date_str = start_date.strftime("%Y-%m-%d")
+        end_date_str = end_date.strftime("%Y-%m-%d")
+
+        
         # 꺾은선 그래프 생성
         fig, ax = plt.subplots(figsize=(10, 5))
         ax.plot(dominance_dates, dominance_values, label="BTC Dominance (%)", color="green")  # 녹색 꺾은선 그래프
-        ax.set_title("BTC Dominance Over Time (Last 1 Year)", fontsize=title_font_size)
+        ax.set_title(f"BTC Dominance Over Time ({start_date_str} to {end_date_str})", fontsize=title_font_size)
         ax.set_xlabel("Date", fontsize=axis_font_size)
         ax.set_ylabel("BTC Dominance (%)", fontsize=axis_font_size)
         ax.set_ylim(0, 100)  # Y축 범위 0% ~ 100%
@@ -251,8 +260,6 @@ if show_market_cap_chart:
 
     except Exception as e:
         st.error(f"암호화폐 데이터를 불러오는 데 실패했습니다: {e}")
-
-
 
 ##########################################################
 
