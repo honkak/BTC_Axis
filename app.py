@@ -66,15 +66,11 @@ if show_btc_price_chart:
 
         # 조회 시작일이 업비트 서비스 시작일 이전이면 자동으로 변경
         if start_date < upbit_start_date:
-            start_date = datetime.datetime.combine(upbit_start_date, datetime.datetime.min.time())
+            start_date = upbit_start_date
             st.warning("업비트 가격을 가져오므로 조회 시작일을 2017년 10월 24일 서비스 개시일로 자동 변경합니다.")
 
-        # 조회 종료일을 datetime 객체로 변환
-        if isinstance(end_date, datetime.date):
-            end_date = datetime.datetime.combine(end_date, datetime.datetime.min.time())
-
-        # 데이터 조회
-        since = upbit.parse8601(start_date.isoformat())
+        # 데이터 조회 (since는 timestamp 형식이어야 함)
+        since = upbit.parse8601(start_date.strftime("%Y-%m-%dT%H:%M:%SZ"))
         ohlcv = upbit.fetch_ohlcv("BTC/KRW", timeframe="1d", since=since)
 
         if not ohlcv:
@@ -86,7 +82,7 @@ if show_btc_price_chart:
             df.set_index("Date", inplace=True)
 
             # 꺾은선 차트 생성
-            st.write(f"{start_date.date()}부터 {end_date.date()}까지 비트코인의 업비트 원화 기준 가격")
+            st.write(f"{start_date}부터 {end_date}까지 비트코인의 업비트 원화 기준 가격")
             fig, ax = plt.subplots(figsize=(10, 5))
             ax.plot(df.index, df["close"], label="BTC 가격 (KRW)", color="green")
             ax.set_title("비트코인 가격 (업비트, 원화 기준)", fontsize=16)
@@ -99,6 +95,7 @@ if show_btc_price_chart:
 
     except Exception as e:
         st.error(f"비트코인 데이터를 가져오는 중 오류가 발생했습니다: {e}")
+
 
 
 
