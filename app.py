@@ -65,9 +65,13 @@ if show_btc_price_chart:
         upbit_start_date = datetime.date(2017, 10, 24)
 
         # 조회 시작일이 업비트 서비스 시작일 이전이면 자동으로 변경
-        if start_date.date() < upbit_start_date:
+        if start_date < upbit_start_date:
             start_date = datetime.datetime.combine(upbit_start_date, datetime.datetime.min.time())
             st.warning("업비트 가격을 가져오므로 조회 시작일을 2017년 10월 24일 서비스 개시일로 자동 변경합니다.")
+
+        # 조회 종료일을 datetime 객체로 변환
+        if isinstance(end_date, datetime.date):
+            end_date = datetime.datetime.combine(end_date, datetime.datetime.min.time())
 
         # 데이터 조회
         since = upbit.parse8601(start_date.isoformat())
@@ -95,6 +99,7 @@ if show_btc_price_chart:
 
     except Exception as e:
         st.error(f"비트코인 데이터를 가져오는 중 오류가 발생했습니다: {e}")
+
 
 
 ######################################
