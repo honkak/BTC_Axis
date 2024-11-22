@@ -264,64 +264,70 @@ if show_market_cap_chart:
     except Exception as e:
         st.error(f"암호화폐 데이터를 불러오는 데 실패했습니다: {e}")
 
-##########################################################
+######################################
 
-# # '김치프리미엄' 체크박스 추가
-# show_kimchi_premium = st.checkbox("김치프리미엄 보기")
+# 수평선 추가
+st.markdown("---")
 
-# # '김치프리미엄' 체크박스 선택 시 실행
-# if show_kimchi_premium:
-#     try:
-#         # 환율 가져오기 함수
-#         def get_exchange_rate():
-#             url = "https://open.er-api.com/v6/latest/USD"
-#             response = requests.get(url)
-#             response.raise_for_status()
-#             data = response.json()
-#             return data['rates']['KRW']
+#####################################
+#김치 프리미엄 트랜드 기능
 
-#         # 업비트와 Binance의 데이터 가져오기
-#         def fetch_historical_data():
-#             upbit = ccxt.upbit()
-#             binance = ccxt.binance()
+# '김치프리미엄' 체크박스 추가
+show_kimchi_premium = st.checkbox("김치프리미엄 보기")
 
-#             since = upbit.parse8601(start_date.isoformat())
-#             upbit_data = upbit.fetch_ohlcv("BTC/KRW", timeframe="1d", since=since)
-#             upbit_df = pd.DataFrame(upbit_data, columns=["timestamp", "open", "high", "low", "close", "volume"])
-#             upbit_df["Date"] = pd.to_datetime(upbit_df["timestamp"], unit="ms")
-#             upbit_df.set_index("Date", inplace=True)
+# '김치프리미엄' 체크박스 선택 시 실행
+if show_kimchi_premium:
+    try:
+        # 환율 가져오기 함수
+        def get_exchange_rate():
+            url = "https://open.er-api.com/v6/latest/USD"
+            response = requests.get(url)
+            response.raise_for_status()
+            data = response.json()
+            return data['rates']['KRW']
 
-#             binance_data = binance.fetch_ohlcv("BTC/USDT", timeframe="1d", since=since)
-#             binance_df = pd.DataFrame(binance_data, columns=["timestamp", "open", "high", "low", "close", "volume"])
-#             binance_df["Date"] = pd.to_datetime(binance_df["timestamp"], unit="ms")
-#             binance_df.set_index("Date", inplace=True)
+        # 업비트와 Binance의 데이터 가져오기
+        def fetch_historical_data():
+            upbit = ccxt.upbit()
+            binance = ccxt.binance()
 
-#             exchange_rate = get_exchange_rate()
-#             binance_df["Close (KRW)"] = binance_df["close"] * exchange_rate
+            since = upbit.parse8601(start_date.isoformat())
+            upbit_data = upbit.fetch_ohlcv("BTC/KRW", timeframe="1d", since=since)
+            upbit_df = pd.DataFrame(upbit_data, columns=["timestamp", "open", "high", "low", "close", "volume"])
+            upbit_df["Date"] = pd.to_datetime(upbit_df["timestamp"], unit="ms")
+            upbit_df.set_index("Date", inplace=True)
 
-#             df = pd.DataFrame({
-#                 "Upbit (KRW)": upbit_df["close"],
-#                 "Binance (KRW)": binance_df["Close (KRW)"]
-#             })
-#             df["Kimchi Premium (%)"] = (df["Upbit (KRW)"] - df["Binance (KRW)"]) / df["Binance (KRW)"] * 100
-#             return df
+            binance_data = binance.fetch_ohlcv("BTC/USDT", timeframe="1d", since=since)
+            binance_df = pd.DataFrame(binance_data, columns=["timestamp", "open", "high", "low", "close", "volume"])
+            binance_df["Date"] = pd.to_datetime(binance_df["timestamp"], unit="ms")
+            binance_df.set_index("Date", inplace=True)
 
-#         # 데이터 가져오기
-#         df = fetch_historical_data()
+            exchange_rate = get_exchange_rate()
+            binance_df["Close (KRW)"] = binance_df["close"] * exchange_rate
 
-#         # 차트 그리기
-#         fig, ax = plt.subplots(figsize=(12, 6))
-#         ax.plot(df.index, df["Kimchi Premium (%)"], label="Kimchi Premium (%)", color="blue")
-#         ax.axhline(0, color="red", linestyle="--", label="Parity Line (0%)")
-#         ax.set_title("Kimchi Premium Over Selected Period")
-#         ax.set_xlabel("Date")
-#         ax.set_ylabel("Kimchi Premium (%)")
-#         ax.legend()
-#         ax.grid()
+            df = pd.DataFrame({
+                "Upbit (KRW)": upbit_df["close"],
+                "Binance (KRW)": binance_df["Close (KRW)"]
+            })
+            df["Kimchi Premium (%)"] = (df["Upbit (KRW)"] - df["Binance (KRW)"]) / df["Binance (KRW)"] * 100
+            return df
 
-#         st.pyplot(fig)
-#     except Exception as e:
-#         st.error(f"김치프리미엄 데이터를 가져오거나 시각화하는 데 실패했습니다: {e}")
+        # 데이터 가져오기
+        df = fetch_historical_data()
+
+        # 차트 그리기
+        fig, ax = plt.subplots(figsize=(12, 6))
+        ax.plot(df.index, df["Kimchi Premium (%)"], label="Kimchi Premium (%)", color="blue")
+        ax.axhline(0, color="red", linestyle="--", label="Parity Line (0%)")
+        ax.set_title("Kimchi Premium Over Selected Period")
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Kimchi Premium (%)")
+        ax.legend()
+        ax.grid()
+
+        st.pyplot(fig)
+    except Exception as e:
+        st.error(f"김치프리미엄 데이터를 가져오거나 시각화하는 데 실패했습니다: {e}")
 
 ####################
 
