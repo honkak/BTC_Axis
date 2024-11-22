@@ -168,13 +168,9 @@ if show_market_cap_chart:
     cg = CoinGeckoAPI()
 
     try:
-        # 조회 기간 계산
-        date_diff = (end_date - start_date).days
-
-        # 조회 기간이 365일을 초과하는 경우 시작일을 자동으로 변경
-        if date_diff > 365:
-            start_date = end_date - datetime.timedelta(days=365)
-            st.warning("조회 기간이 365일 이내로 제한되어 있습니다. 조회 시작일을 자동으로 변경합니다.")
+        # 강제로 현재 시점 기준으로 365일 전부터 데이터 설정
+        end_date = datetime.datetime.now()
+        start_date = end_date - datetime.timedelta(days=365)
 
         # 상위 암호화폐 시가총액 가져오기 (최신 데이터)
         top_coins = cg.get_coins_markets(vs_currency='usd', order='market_cap_desc', per_page=100, page=1)
@@ -224,9 +220,9 @@ if show_market_cap_chart:
         ax.set_title('Market Cap Distribution: Top 5 Coins and Others', fontsize=title_font_size)
         st.pyplot(fig)
 
-        # 조회 시작일부터 종료일까지 BTC 도미넌스 데이터 가져오기
-        start_timestamp = int(datetime.datetime.combine(start_date, datetime.datetime.min.time()).timestamp())
-        end_timestamp = int(datetime.datetime.combine(end_date, datetime.datetime.min.time()).timestamp())
+        # 365일 전부터 현재까지 BTC 도미넌스 데이터 가져오기
+        start_timestamp = int(start_date.timestamp())
+        end_timestamp = int(end_date.timestamp())
         btc_dominance_data = cg.get_coin_market_chart_range_by_id(
             id='bitcoin',
             vs_currency='usd',
@@ -255,6 +251,7 @@ if show_market_cap_chart:
 
     except Exception as e:
         st.error(f"암호화폐 데이터를 불러오는 데 실패했습니다: {e}")
+
 
 
 ##########################################################
