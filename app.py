@@ -81,32 +81,30 @@ if show_market_cap_chart:
         if not top_coins:
             raise ValueError("상위 암호화폐 데이터를 가져오는 데 실패했습니다.")
 
-        # 비트코인 시가총액 계산
-        btc_market_cap = next((coin['market_cap'] for coin in top_coins if coin['symbol'] == 'btc'), 0)
+        # 상위 5개 코인과 Others 처리
+        top_5_coins = top_coins[:5]  # 상위 5개 코인
+        top_5_market_cap = sum(coin['market_cap'] for coin in top_5_coins)
+        others_market_cap = sum(coin['market_cap'] for coin in top_coins[5:])  # 나머지 코인
 
-        # 글로벌 시가총액 계산 (상위 100개 코인의 합산)
-        global_market_cap = sum(coin['market_cap'] for coin in top_coins)
-
-        # BTC Dominance 계산
-        btc_dominance = (btc_market_cap / global_market_cap) * 100 if global_market_cap > 0 else 0
+        # 데이터 준비
+        labels = [coin['name'] for coin in top_5_coins] + ['Others']
+        sizes = [coin['market_cap'] for coin in top_5_coins] + [others_market_cap]
 
         # 데이터 검증 및 출력
-        st.write(f"Global Market Cap (USD): {global_market_cap:,.2f}")
-        st.write(f"BTC Market Cap (USD): {btc_market_cap:,.2f}")
-        st.write(f"BTC Dominance (%): {btc_dominance:.2f}%")
-
-        # 파이 차트 데이터 준비
-        labels = ['BTC', 'Others']
-        sizes = [btc_market_cap, max(global_market_cap - btc_market_cap, 0)]
+        st.write("Top 5 Coins Market Cap (USD):")
+        for coin in top_5_coins:
+            st.write(f"{coin['name']}: {coin['market_cap']:,.2f} USD")
+        st.write(f"Others: {others_market_cap:,.2f} USD")
 
         # 파이 차트 생성
         fig, ax = plt.subplots(figsize=(8, 6))
         ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=140)
-        ax.set_title('BTC Dominance: Percentage of BTC in the Total Crypto Market')
+        ax.set_title('Market Cap Distribution: Top 5 Coins and Others')
         st.pyplot(fig)
 
     except Exception as e:
-        st.error(f"암호화폐 시가총액 데이터를 가져오는 데 실패했습니다: {e}")
+        st.error(f"암호화폐 시가총액 데이터를 불러오는 데 실패했습니다: {e}")
+
 
 
 
