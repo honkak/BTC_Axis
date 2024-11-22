@@ -84,7 +84,7 @@ if show_btc_price_chart:
                 break
             ohlcv.extend(data)
             last_time = data[-1][0]
-            if last_time >= end_timestamp:
+            if last_time >= end_timestamp or last_time == from_time:
                 break
             from_time = last_time + 1
 
@@ -95,12 +95,29 @@ if show_btc_price_chart:
             df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
             df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
             df.set_index("Date", inplace=True)
-            df = df[(df.index.date >= start_date) & (df.index.date <= end_date)]
+
+            # 조회 시작일과 종료일에 맞게 필터링
+            df = df[(df.index >= pd.to_datetime(start_date)) & (df.index <= pd.to_datetime(end_date))]
+
+            # 종료일 기준 종가 가져오기
+            if not df.empty:
+                last_close = df.iloc[-1]["close"]
+                st.write(f"BTC Price (KRW) on {end_date}: {last_close:,.0f} KRW")
+            else:
+                last_close = None
+                st.warning(f"No closing price data available for {end_date}.")
+
+            # 현재 날짜와 종료일 비교, 종료일이 오늘이면 현재 가격 출력
+            today = datetime.date.today()
+            if end_date == today:
+                ticker = upbit.fetch_ticker("BTC/KRW")
+                current_price = ticker["last"]
+                st.write(f"BTC Current Price (KRW) as of now: {current_price:,.0f} KRW")
 
             # 꺾은선 차트 생성
             st.write(f"BTC Price in KRW: {start_date} to {end_date}")
             fig, ax = plt.subplots(figsize=(10, 5))
-            ax.plot(df.index, df["close"], label="BTC 가격 (KRW)", color="green")
+            ax.plot(df.index, df["close"], label="BTC Price (KRW)", color="green")
             ax.set_title("Bitcoin Price in KRW (Upbit)", fontsize=16)
             ax.set_xlabel("Date", fontsize=12)
             ax.set_ylabel("Price (KRW)", fontsize=12)
@@ -111,6 +128,7 @@ if show_btc_price_chart:
 
     except Exception as e:
         st.error(f"비트코인 데이터를 가져오는 중 오류가 발생했습니다: {e}")
+
 
 
 
