@@ -118,16 +118,21 @@ if show_market_cap_chart:
 
         # 도미넌스 데이터 처리
         dominance_dates = [datetime.datetime.fromtimestamp(price[0] / 1000) for price in btc_dominance_data['market_caps']]
-        dominance_values = [price[1] for price in btc_dominance_data['market_caps']]
+        dominance_values = [
+            (price[1] / global_market_cap) * 100 if global_market_cap > 0 else 0
+            for price in btc_dominance_data['market_caps']
+        ]
 
         # 꺾은선 그래프 생성
         fig, ax = plt.subplots(figsize=(10, 5))
-        ax.plot(dominance_dates, dominance_values, label="BTC Dominance", color="blue")
+        ax.plot(dominance_dates, dominance_values, label="BTC Dominance (%)", color="blue")
         ax.set_title("BTC Dominance Over Time")
         ax.set_xlabel("Date")
-        ax.set_ylabel("Market Cap (USD)")
+        ax.set_ylabel("BTC Dominance (%)")
+        ax.set_ylim(0, 100)  # Y축 범위 0% ~ 100%
         ax.grid(True)
         ax.legend()
+        plt.xticks(rotation=45)  # X축 날짜를 대각선으로
         st.pyplot(fig)
 
     except Exception as e:
