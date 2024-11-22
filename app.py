@@ -18,8 +18,8 @@ from matplotlib import font_manager
 def set_korean_font():
     try:
         # '맑은 고딕' 또는 '나눔고딕' 중 하나를 선택
-        matplotlib.rc('font', family='Malgun Gothic')  # Windows 기본 한글 폰트
-        # matplotlib.rc('font', family='NanumGothic')  # 나눔고딕 사용 시 주석 해제
+        # matplotlib.rc('font', family='Malgun Gothic')  # Windows 기본 한글 폰트
+        matplotlib.rc('font', family='NanumGothic')  # 나눔고딕 사용 시 주석 해제
         plt.rcParams['axes.unicode_minus'] = False  # 마이너스 기호 깨짐 방지
     except Exception as e:
         print(f"폰트 설정 실패: {e}")
