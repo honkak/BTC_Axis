@@ -273,8 +273,9 @@ st.markdown("---")
 #김치 프리미엄 트랜드 기능
 
 # '김치프리미엄' 체크박스 추가
-show_kimchi_premium = st.checkbox("김치 프리미엄")
+show_kimchi_premium = st.checkbox("김치프리미엄 보기")
 
+# '김치프리미엄' 체크박스 선택 시 실행
 if show_kimchi_premium:
     try:
         # 환율 가져오기 함수
@@ -288,7 +289,13 @@ if show_kimchi_premium:
         # 업비트와 Binance의 데이터 가져오기
         def fetch_historical_data():
             upbit = ccxt.upbit()
-            binance = ccxt.binance()
+
+            # 대체 바이낸스 엔드포인트 사용
+            binance = ccxt.binance({
+                'urls': {
+                    'api': 'https://data.binance.com'
+                }
+            })
 
             # 최근 1년(365일) 기준으로 강제 설정
             end_date = datetime.datetime.now()
@@ -325,7 +332,7 @@ if show_kimchi_premium:
         fig, ax = plt.subplots(figsize=(12, 6))
         ax.plot(df.index, df["Kimchi Premium (%)"], label="Kimchi Premium (%)", color="blue")
         ax.axhline(0, color="red", linestyle="--", label="Parity Line (0%)")
-        ax.set_title(f"Kimchi Premium Over Last 1 Year ({start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')})")
+        ax.set_title("Kimchi Premium Over Last 1 Year")
         ax.set_xlabel("Date")
         ax.set_ylabel("Kimchi Premium (%)")
         ax.legend()
@@ -334,6 +341,7 @@ if show_kimchi_premium:
         st.pyplot(fig)
     except Exception as e:
         st.error(f"김치프리미엄 데이터를 가져오거나 시각화하는 데 실패했습니다: {e}")
+
 
 
 ####################
