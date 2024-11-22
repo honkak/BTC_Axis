@@ -54,6 +54,8 @@ fixed_ratio = st.checkbox("기준시점 수익률 비교(Baseline return)")
 # 수평선 추가
 st.markdown("---")
 
+##########################################################
+
 # 'BTC 시가총액 비율' 체크박스
 show_market_cap_chart = st.checkbox("BTC 시가총액 비율")
 
@@ -62,18 +64,37 @@ if show_market_cap_chart:
     cg = CoinGeckoAPI()
 
     try:
-        # 글로벌 시가총액 가져오기
-        global_data = cg.get_global()
+        # 글로벌 시가총액 가져오기 (재시도 로직 포함)
+        global_data = None
+        for attempt in range(3):  # 최대 3번 재시도
+            try:
+                global_data = cg.get_global()
+                if global_data:
+                    break
+            except Exception:
+                time.sleep(2)  # 2초 대기 후 재시도
+        if not global_data:
+            raise ValueError("글로벌 암호화폐 시가총액 데이터를 가져오는 데 실패했습니다.")
+
         global_market_cap = global_data.get('data', {}).get('total_market_cap', {}).get('usd', 0)
 
         # 상위 암호화폐 시가총액 가져오기
         top_coins = cg.get_coins_markets(vs_currency='usd', order='market_cap_desc', per_page=5, page=1)
+        if not top_coins:
+            raise ValueError("상위 암호화폐 시가총액 데이터를 가져오는 데 실패했습니다.")
 
         # 데이터 정리
         labels = [coin['name'] for coin in top_coins] + ['Others']
         sizes = [coin['market_cap'] for coin in top_coins]
-        others_market_cap = global_market_cap - sum(sizes)
+
+        # 시가총액 합계와 'Others' 계산
+        total_top_market_cap = sum(sizes)
+        others_market_cap = max(global_market_cap - total_top_market_cap, 0)  # 음수 방지
         sizes.append(others_market_cap)
+
+        # 데이터 검증
+        if any(size < 0 for size in sizes) or not sizes:
+            raise ValueError("시가총액 데이터가 올바르지 않습니다.")
 
         # 파이 차트 생성
         fig, ax = plt.subplots(figsize=(8, 6))
@@ -81,7 +102,9 @@ if show_market_cap_chart:
         ax.set_title('Global Cryptocurrency Market Cap Distribution')
         st.pyplot(fig)
     except Exception as e:
-        st.error("암호화폐 시가총액 데이터를 불러오는 데 실패했습니다.")
+        st.error(f"암호화폐 시가총액 데이터를 불러오는 데 실패했습니다: {e}")
+
+##########################################################
 
 # # '김치프리미엄' 체크박스 추가
 # show_kimchi_premium = st.checkbox("김치프리미엄 보기")
