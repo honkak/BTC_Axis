@@ -90,10 +90,15 @@ if show_market_cap_chart:
         labels = [coin['name'] for coin in top_5_coins] + ['Others']
         sizes = [coin['market_cap'] for coin in top_5_coins] + [others_market_cap]
 
-        # 데이터 검증 및 출력 (상위 5개 코인 및 Others 합산)
+        # BTC 시가총액 및 도미넌스 계산
+        btc_market_cap = sizes[0]
         global_market_cap = top_5_market_cap + others_market_cap
+        btc_dominance = (btc_market_cap / global_market_cap) * 100
+
+        # 데이터 검증 및 출력
         st.write(f"Global Market Cap (USD): {int(global_market_cap):,} USD")
-        st.write(f"BTC Dominance: {int(sizes[0] / global_market_cap * 100):.2f}%")
+        st.write(f"BTC Market Cap (USD): {int(btc_market_cap):,} USD")
+        st.write(f"BTC Dominance: {btc_dominance:.2f}%")
 
         # 파이 차트 생성
         fig, ax = plt.subplots(figsize=(8, 6))
@@ -103,6 +108,7 @@ if show_market_cap_chart:
 
     except Exception as e:
         st.error(f"암호화폐 시가총액 데이터를 불러오는 데 실패했습니다: {e}")
+
 
 
 
