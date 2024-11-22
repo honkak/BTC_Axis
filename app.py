@@ -310,6 +310,10 @@ if show_kimchi_premium:
             cg_df["Date"] = pd.to_datetime(cg_df["timestamp"], unit="ms")
             cg_df.set_index("Date", inplace=True)
 
+            # 디버깅: 가져온 데이터 샘플 출력
+            st.write("Upbit Data Sample:", upbit_df.tail())
+            st.write("CoinGecko Data Sample:", cg_df.tail())
+
             # 환율 적용
             exchange_rate = get_exchange_rate()
             cg_df["Close (KRW)"] = cg_df["price_usd"] * exchange_rate
