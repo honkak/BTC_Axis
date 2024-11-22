@@ -208,7 +208,7 @@ if show_market_cap_chart:
         st.write(f"BTC Dominance: {btc_dominance:.2f}%")
 
         # 파이 차트 생성
-        fig, ax = plt.subplots(figsize=(5, 3))
+        fig, ax = plt.subplots(figsize=(8, 6))
         ax.pie(
             sizes,
             labels=labels,
