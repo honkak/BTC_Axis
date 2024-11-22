@@ -76,10 +76,6 @@ if show_market_cap_chart:
     cg = CoinGeckoAPI()
 
     try:
-        # 글로벌 시가총액 가져오기
-        global_data = cg.get_global()
-        global_market_cap = global_data.get('data', {}).get('total_market_cap', {}).get('usd', 0)
-
         # 상위 암호화폐 시가총액 가져오기 (100개까지)
         top_coins = cg.get_coins_markets(vs_currency='usd', order='market_cap_desc', per_page=100, page=1)
         if not top_coins:
@@ -87,9 +83,14 @@ if show_market_cap_chart:
 
         # 비트코인 시가총액 계산
         btc_market_cap = next((coin['market_cap'] for coin in top_coins if coin['symbol'] == 'btc'), 0)
+
+        # 글로벌 시가총액 계산 (상위 100개 코인의 합산)
+        global_market_cap = sum(coin['market_cap'] for coin in top_coins)
+
+        # BTC Dominance 계산
         btc_dominance = (btc_market_cap / global_market_cap) * 100 if global_market_cap > 0 else 0
 
-        # 데이터 검증
+        # 데이터 검증 및 출력
         st.write(f"Global Market Cap (USD): {global_market_cap:,.2f}")
         st.write(f"BTC Market Cap (USD): {btc_market_cap:,.2f}")
         st.write(f"BTC Dominance (%): {btc_dominance:.2f}%")
@@ -106,6 +107,7 @@ if show_market_cap_chart:
 
     except Exception as e:
         st.error(f"암호화폐 시가총액 데이터를 가져오는 데 실패했습니다: {e}")
+
 
 
 ##########################################################
