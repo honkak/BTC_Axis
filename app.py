@@ -322,6 +322,10 @@ if show_kimchi_premium:
             df["Kimchi Premium (%)"] = (df["Upbit (KRW)"] - df["CoinGecko (KRW)"]) / df["CoinGecko (KRW)"] * 100
             return df
 
+        # 최근 1년(365일) 기준으로 강제 설정
+        end_date = datetime.datetime.now()
+        start_date = end_date - datetime.timedelta(days=365)
+        
         # 데이터 가져오기
         df = fetch_historical_data()
 
