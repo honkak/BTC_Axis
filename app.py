@@ -163,6 +163,101 @@ if show_market_cap_chart:
 
 ##########################################################
 
+import matplotlib.cm as cm  # viridis 색상 맵을 사용하기 위해 추가
+
+# 'BTC 시가총액 비율' 체크박스
+show_market_cap_chart = st.checkbox("BTC 시가총액 비율1")
+
+if show_market_cap_chart:
+    cg = CoinGeckoAPI()
+
+    try:
+        # 조회 기간 계산
+        date_diff = (end_date - start_date).days
+
+        # 조회 기간이 365일을 초과하는 경우 시작일을 자동으로 변경
+        if date_diff > 365:
+            start_date = end_date - datetime.timedelta(days=365)
+            st.warning("조회 기간이 365일 이내로 제한되어 있습니다. 조회 시작일을 자동으로 변경합니다.")
+
+        # 상위 암호화폐 시가총액 가져오기 (최신 데이터)
+        top_coins = cg.get_coins_markets(vs_currency='usd', order='market_cap_desc', per_page=100, page=1)
+        if not top_coins:
+            raise ValueError("상위 암호화폐 데이터를 가져오는 데 실패했습니다.")
+
+        # 상위 5개 코인과 Others 처리
+        top_5_coins = top_coins[:5]  # 상위 5개 코인
+        top_5_market_cap = sum(coin['market_cap'] for coin in top_5_coins)
+        others_market_cap = sum(coin['market_cap'] for coin in top_coins[5:])  # 나머지 코인
+
+        # 데이터 준비
+        labels = [coin['name'] for coin in top_5_coins] + ['Others']
+        sizes = [coin['market_cap'] for coin in top_5_coins] + [others_market_cap]
+
+        # viridis 색상 맵 적용
+        cmap = cm.get_cmap('viridis', len(sizes))  # viridis 색상 맵 생성
+        pie_colors = [cmap(i) for i in range(len(sizes))]  # 파이 차트 색상 리스트 생성
+
+        # 폰트 및 스타일 설정
+        font_size = 14  # 차트 폰트 크기
+        title_font_size = 16  # 차트 제목 폰트 크기
+        axis_font_size = 12  # 축 폰트 크기
+
+        # BTC 시가총액 및 도미넌스 계산
+        btc_market_cap = sizes[0]
+        global_market_cap = top_5_market_cap + others_market_cap
+        btc_dominance = (btc_market_cap / global_market_cap) * 100
+
+        # 데이터 검증 및 출력
+        st.write(f"Global Market Cap (USD): {int(global_market_cap):,} USD")
+        st.write(f"BTC Market Cap (USD): {int(btc_market_cap):,} USD")
+        st.write(f"BTC Dominance: {btc_dominance:.2f}%")
+
+        # 파이 차트 생성
+        fig, ax = plt.subplots(figsize=(8, 6))
+        ax.pie(
+            sizes,
+            labels=labels,
+            autopct=lambda p: f'{p:.1f}%' if p > 0 else '',
+            startangle=140,
+            colors=pie_colors
+        )
+        ax.set_title('Market Cap Distribution: Top 5 Coins and Others', fontsize=title_font_size)
+        st.pyplot(fig)
+
+        # 조회 시작일부터 종료일까지 BTC 도미넌스 데이터 가져오기
+        start_timestamp = int(datetime.datetime.combine(start_date, datetime.datetime.min.time()).timestamp())
+        end_timestamp = int(datetime.datetime.combine(end_date, datetime.datetime.min.time()).timestamp())
+        btc_dominance_data = cg.get_coin_market_chart_range_by_id(
+            id='bitcoin',
+            vs_currency='usd',
+            from_timestamp=start_timestamp,
+            to_timestamp=end_timestamp
+        )
+
+        # 도미넌스 데이터 처리
+        dominance_dates = [datetime.datetime.fromtimestamp(price[0] / 1000) for price in btc_dominance_data['market_caps']]
+        dominance_values = [
+            (price[1] / global_market_cap) * 100 if global_market_cap > 0 else 0
+            for price in btc_dominance_data['market_caps']
+        ]
+
+        # 꺾은선 그래프 생성
+        fig, ax = plt.subplots(figsize=(10, 5))
+        ax.plot(dominance_dates, dominance_values, label="BTC Dominance (%)", color=cm.viridis(0.5))
+        ax.set_title("BTC Dominance Over Time", fontsize=title_font_size)
+        ax.set_xlabel("Date", fontsize=axis_font_size)
+        ax.set_ylabel("BTC Dominance (%)", fontsize=axis_font_size)
+        ax.set_ylim(0, 100)  # Y축 범위 0% ~ 100%
+        ax.grid(True)
+        ax.legend(fontsize=font_size)
+        plt.xticks(rotation=45, fontsize=axis_font_size)  # X축 날짜를 대각선으로 표시
+        st.pyplot(fig)
+
+    except Exception as e:
+        st.error(f"암호화폐 데이터를 불러오는 데 실패했습니다: {e}")
+
+
 # # '김치프리미엄' 체크박스 추가
 # show_kimchi_premium = st.checkbox("김치프리미엄 보기")
 
