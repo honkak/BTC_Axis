@@ -284,7 +284,7 @@ if show_kimchi_premium:
             return data['rates']['KRW']
 
         # 업비트와 코인게코 데이터를 사용한 김치프리미엄 계산
-        def fetch_historical_data():
+        def fetch_historical_and_live_data():
             upbit = ccxt.upbit()
             cg = CoinGeckoAPI()
 
@@ -292,12 +292,22 @@ if show_kimchi_premium:
             end_date = datetime.datetime.now()
             start_date = end_date - datetime.timedelta(days=365)
 
-            # 업비트 데이터 가져오기
+            # 업비트 데이터 가져오기 (과거 데이터)
             since = int(start_date.timestamp() * 1000)
             upbit_data = upbit.fetch_ohlcv("BTC/KRW", timeframe="1d", since=since)
             upbit_df = pd.DataFrame(upbit_data, columns=["timestamp", "open", "high", "low", "close", "volume"])
             upbit_df["Date"] = pd.to_datetime(upbit_df["timestamp"], unit="ms")
             upbit_df.set_index("Date", inplace=True)
+
+            # 실시간 가격 추가
+            ticker = upbit.fetch_ticker("BTC/KRW")
+            live_data = {
+                "Date": pd.to_datetime(end_date),
+                "close": ticker["last"]
+            }
+            upbit_df = pd.concat(
+                [upbit_df, pd.DataFrame([live_data]).set_index("Date")]
+            )
 
             # 코인게코 데이터를 가져오기
             btc_market_data = cg.get_coin_market_chart_range_by_id(
@@ -309,10 +319,6 @@ if show_kimchi_premium:
             cg_df = pd.DataFrame(btc_market_data["prices"], columns=["timestamp", "price_usd"])
             cg_df["Date"] = pd.to_datetime(cg_df["timestamp"], unit="ms")
             cg_df.set_index("Date", inplace=True)
-
-            # 디버깅: 가져온 데이터 샘플 출력
-            st.write("Upbit Data Sample:", upbit_df.tail())
-            st.write("CoinGecko Data Sample:", cg_df.tail())
 
             # 환율 적용
             exchange_rate = get_exchange_rate()
@@ -331,12 +337,8 @@ if show_kimchi_premium:
             df["Kimchi Premium (%)"] = (df["Upbit (KRW)"] - df["CoinGecko (KRW)"]) / df["CoinGecko (KRW)"] * 100
             return df
 
-        # 최근 1년(365일) 기준으로 강제 설정
-        end_date = datetime.datetime.now()
-        start_date = end_date - datetime.timedelta(days=365)
-
         # 데이터 가져오기
-        df = fetch_historical_data()
+        df = fetch_historical_and_live_data()
 
         # 데이터 확인
         if df.empty:
