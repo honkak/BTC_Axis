@@ -314,6 +314,11 @@ if show_kimchi_premium:
             exchange_rate = get_exchange_rate()
             cg_df["Close (KRW)"] = cg_df["price_usd"] * exchange_rate
 
+            # 데이터 동기화 (공통 날짜만 사용)
+            common_dates = upbit_df.index.intersection(cg_df.index)
+            upbit_df = upbit_df.loc[common_dates]
+            cg_df = cg_df.loc[common_dates]
+
             # 김치프리미엄 계산
             df = pd.DataFrame({
                 "Upbit (KRW)": upbit_df["close"],
@@ -325,24 +330,29 @@ if show_kimchi_premium:
         # 최근 1년(365일) 기준으로 강제 설정
         end_date = datetime.datetime.now()
         start_date = end_date - datetime.timedelta(days=365)
-        
+
         # 데이터 가져오기
         df = fetch_historical_data()
 
-        # 차트 그리기
-        fig, ax = plt.subplots(figsize=(12, 6))
-        ax.plot(df.index, df["Kimchi Premium (%)"], label="Kimchi Premium (%)", color="blue")
-        ax.axhline(0, color="red", linestyle="--", label="Parity Line (0%)")
-        ax.set_title(f"Kimchi Premium Over Last 1 Year ({start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')})")
+        # 데이터 확인
+        if df.empty:
+            st.warning("김치프리미엄 데이터를 가져올 수 없습니다. 다른 기간을 선택하거나 데이터를 확인하세요.")
+        else:
+            # 차트 그리기
+            fig, ax = plt.subplots(figsize=(12, 6))
+            ax.plot(df.index, df["Kimchi Premium (%)"], label="Kimchi Premium (%)", color="blue")
+            ax.axhline(0, color="red", linestyle="--", label="Parity Line (0%)")
+            ax.set_title(f"Kimchi Premium Over Last 1 Year ({start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')})")
 
-        ax.set_xlabel("Date")
-        ax.set_ylabel("Kimchi Premium (%)")
-        ax.legend()
-        ax.grid()
+            ax.set_xlabel("Date")
+            ax.set_ylabel("Kimchi Premium (%)")
+            ax.legend()
+            ax.grid()
 
-        st.pyplot(fig)
+            st.pyplot(fig)
     except Exception as e:
         st.error(f"김치프리미엄 데이터를 가져오거나 시각화하는 데 실패했습니다: {e}")
+
 
 
 
