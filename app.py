@@ -12,19 +12,19 @@ from pycoingecko import CoinGeckoAPI
 import matplotlib.pyplot as plt
 import requests
 import ccxt
-from matplotlib import font_manager
+# from matplotlib import font_manager
 
-# 한글 폰트 설정 (폰트 이름으로 설정)
-def set_korean_font():
-    try:
-        # '맑은 고딕' 또는 '나눔고딕' 중 하나를 선택
-        # matplotlib.rc('font', family='Malgun Gothic')  # Windows 기본 한글 폰트
-        matplotlib.rc('font', family='NanumGothic')  # 나눔고딕 사용 시 주석 해제
-        plt.rcParams['axes.unicode_minus'] = False  # 마이너스 기호 깨짐 방지
-    except Exception as e:
-        print(f"폰트 설정 실패: {e}")
+# # 한글 폰트 설정 (폰트 이름으로 설정)
+# def set_korean_font():
+#     try:
+#         # '맑은 고딕' 또는 '나눔고딕' 중 하나를 선택
+#         # matplotlib.rc('font', family='Malgun Gothic')  # Windows 기본 한글 폰트
+#         matplotlib.rc('font', family='NanumGothic')  # 나눔고딕 사용 시 주석 해제
+#         plt.rcParams['axes.unicode_minus'] = False  # 마이너스 기호 깨짐 방지
+#     except Exception as e:
+#         print(f"폰트 설정 실패: {e}")
 
-set_korean_font()
+# set_korean_font()
 
 # 서비스 제목 입력
 st.markdown("<h2 style='font-size: 24px; text-align: center;'>다빈치 BTC Axis</h2>", unsafe_allow_html=True)
@@ -112,7 +112,7 @@ if show_market_cap_chart:
         # 파이 차트 생성
         fig, ax = plt.subplots(figsize=(8, 6))
         ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=140)
-        ax.set_title('비트코인 도미넌스_전체 암호화폐 시장에서 BTC가 차지하는 비율(%)')
+        ax.set_title('BTC Dominance: Percentage of BTC in the Total Crypto Market')
         st.pyplot(fig)
     except Exception as e:
         st.error(f"암호화폐 시가총액 데이터를 불러오는 데 실패했습니다: {e}")
