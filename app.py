@@ -193,9 +193,9 @@ if show_market_cap_chart:
         explode = [0.05 for _ in labels]
 
         # 폰트 및 스타일 설정
-        font_size = 14  # 차트 폰트 크기
-        title_font_size = 16  # 차트 제목 폰트 크기
-        axis_font_size = 12  # 축 폰트 크기
+        font_size = 10  # 차트 폰트 크기
+        title_font_size = 12  # 차트 제목 폰트 크기
+        axis_font_size = 8  # 축 폰트 크기
 
         # BTC 시가총액 및 도미넌스 계산
         btc_market_cap = sizes[0]
