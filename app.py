@@ -13,6 +13,18 @@ import matplotlib.pyplot as plt
 import requests
 import ccxt
 
+# 한글 폰트 설정
+def set_korean_font():
+    try:
+        font_path = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"  # 예시: Nanum Gothic
+        font_prop = font_manager.FontProperties(fname=font_path)
+        matplotlib.rc('font', family=font_prop.get_name())
+        plt.rcParams['axes.unicode_minus'] = False  # 마이너스 기호 깨짐 방지
+    except Exception as e:
+        print(f"폰트 설정 실패: {e}")
+
+set_korean_font()
+
 # 서비스 제목 입력
 st.markdown("<h2 style='font-size: 24px; text-align: center;'>다빈치 BTC Axis</h2>", unsafe_allow_html=True)
 
