@@ -76,7 +76,7 @@ if show_market_cap_chart:
     cg = CoinGeckoAPI()
 
     try:
-        # 상위 암호화폐 시가총액 가져오기 (100개까지)
+        # 상위 암호화폐 시가총액 가져오기 (최신 데이터)
         top_coins = cg.get_coins_markets(vs_currency='usd', order='market_cap_desc', per_page=100, page=1)
         if not top_coins:
             raise ValueError("상위 암호화폐 데이터를 가져오는 데 실패했습니다.")
@@ -106,12 +106,32 @@ if show_market_cap_chart:
         ax.set_title('Market Cap Distribution: Top 5 Coins and Others')
         st.pyplot(fig)
 
+        # 조회 시작일부터 종료일까지 BTC 도미넌스 데이터 가져오기
+        start_timestamp = int(datetime.datetime.combine(start_date, datetime.datetime.min.time()).timestamp())
+        end_timestamp = int(datetime.datetime.combine(end_date, datetime.datetime.min.time()).timestamp())
+        btc_dominance_data = cg.get_coin_market_chart_range_by_id(
+            id='bitcoin',
+            vs_currency='usd',
+            from_timestamp=start_timestamp,
+            to_timestamp=end_timestamp
+        )
+
+        # 도미넌스 데이터 처리
+        dominance_dates = [datetime.datetime.fromtimestamp(price[0] / 1000) for price in btc_dominance_data['market_caps']]
+        dominance_values = [price[1] for price in btc_dominance_data['market_caps']]
+
+        # 꺾은선 그래프 생성
+        fig, ax = plt.subplots(figsize=(10, 5))
+        ax.plot(dominance_dates, dominance_values, label="BTC Dominance", color="blue")
+        ax.set_title("BTC Dominance Over Time")
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Market Cap (USD)")
+        ax.grid(True)
+        ax.legend()
+        st.pyplot(fig)
+
     except Exception as e:
-        st.error(f"암호화폐 시가총액 데이터를 불러오는 데 실패했습니다: {e}")
-
-
-
-
+        st.error(f"암호화폐 데이터를 불러오는 데 실패했습니다: {e}")
 
 
 ##########################################################
