@@ -13,11 +13,10 @@ import matplotlib.pyplot as plt
 import requests
 import ccxt
 
-# Windows 기본 한글 폰트 설정
+# 한글 폰트 설정 (경로 없이 이름만 사용)
 def set_korean_font():
     try:
-        font_prop = font_manager.FontProperties(fname="C:\\Windows\\Fonts\\malgun.ttf")
-        matplotlib.rc('font', family=font_prop.get_name())
+        matplotlib.rc('font', family='Malgun Gothic')  # Windows 기본 한글 폰트
         plt.rcParams['axes.unicode_minus'] = False  # 마이너스 기호 깨짐 방지
     except Exception as e:
         print(f"폰트 설정 실패: {e}")
