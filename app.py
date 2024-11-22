@@ -71,8 +71,6 @@ if show_btc_price_chart:
 
         # 데이터 조회를 위한 타임스탬프 변환
         since = int(datetime.datetime.combine(start_date, datetime.datetime.min.time()).timestamp() * 1000)
-
-        # 종료일 처리
         end_timestamp = int(datetime.datetime.combine(end_date, datetime.datetime.max.time()).timestamp() * 1000)
 
         # 데이터 조회
@@ -88,6 +86,10 @@ if show_btc_price_chart:
                 break
             from_time = last_time + 1
 
+        # 초기화
+        start_price = None
+        end_price = None
+
         if not ohlcv:
             st.warning("선택한 기간에 대한 데이터가 없습니다. 다른 기간을 선택해 주세요.")
         else:
@@ -99,12 +101,11 @@ if show_btc_price_chart:
             # 조회 시작일과 종료일에 맞게 필터링
             df = df[(df.index >= pd.to_datetime(start_date)) & (df.index <= pd.to_datetime(end_date))]
 
-            # 종료일 기준 종가 가져오기
             if not df.empty:
-                last_close = df.iloc[-1]["close"]
-                st.write(f"BTC Price (KRW) on {end_date}: {last_close:,.0f} KRW")
+                start_price = df.iloc[0]["close"]  # 시작 가격
+                end_price = df.iloc[-1]["close"]  # 종료 가격
+                st.write(f"BTC Price (KRW) on {end_date}: {end_price:,.0f} KRW")
             else:
-                last_close = None
                 st.warning(f"No closing price data available for {end_date}.")
 
             # 현재 날짜와 종료일 비교, 종료일이 오늘이면 현재 가격 출력
@@ -115,16 +116,17 @@ if show_btc_price_chart:
                 st.write(f"BTC Current Price (KRW) as of now: {current_price:,.0f} KRW")
 
             # 꺾은선 차트 생성
-            st.write(f"BTC Price in KRW: {start_date} to {end_date}")
-            fig, ax = plt.subplots(figsize=(10, 5))
-            ax.plot(df.index, df["close"], label="BTC Price (KRW)", color="green")
-            ax.set_title("Bitcoin Price in KRW (Upbit)", fontsize=16)
-            ax.set_xlabel("Date", fontsize=12)
-            ax.set_ylabel("Price (KRW)", fontsize=12)
-            ax.grid(True)
-            ax.legend(fontsize=12)
-            plt.xticks(rotation=45)
-            st.pyplot(fig)
+            if not df.empty:
+                st.write(f"BTC Price in KRW: {start_date} to {end_date}")
+                fig, ax = plt.subplots(figsize=(10, 5))
+                ax.plot(df.index, df["close"], label="BTC Price (KRW)", color="green")
+                ax.set_title("Bitcoin Price in KRW (Upbit)", fontsize=16)
+                ax.set_xlabel("Date", fontsize=12)
+                ax.set_ylabel("Price (KRW)", fontsize=12)
+                ax.grid(True)
+                ax.legend(fontsize=12)
+                plt.xticks(rotation=45)
+                st.pyplot(fig)
 
             # 1천만 원 투자 결과 계산
             if start_price and end_price:
@@ -139,10 +141,7 @@ if show_btc_price_chart:
                 total_amount = initial_investment + profit_amount
 
                 # 수익률 색상 결정
-                if return_percentage >= 0:
-                    color = 'red'  # 양수일 경우 붉은색
-                else:
-                    color = 'blue'  # 음수일 경우 파란색
+                color = 'red' if return_percentage >= 0 else 'blue'
 
                 # 결과 출력
                 st.markdown(
@@ -153,6 +152,7 @@ if show_btc_price_chart:
 
     except Exception as e:
         st.error(f"비트코인 데이터를 가져오는 중 오류가 발생했습니다: {e}")
+
 
 ######################################
 
