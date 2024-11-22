@@ -363,7 +363,113 @@ if show_kimchi_premium:
 
 
 
-####################
+##########################
+
+import requests
+import ccxt
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# 조회 기간 설정 (일 단위)
+NUM_DAYS = 200  # 원하는 조회 기간 (예: 30일)
+
+# 환율 가져오기 함수
+def get_exchange_rate():
+    url = "https://open.er-api.com/v6/latest/USD"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+        if 'rates' in data and 'KRW' in data['rates']:
+            return data['rates']['KRW']
+        else:
+            raise ValueError("Failed to fetch exchange rate.")
+    except requests.RequestException as e:
+        print(f"Error fetching exchange rate: {e}")
+        raise
+
+# 업비트와 Binance의 데이터 가져오기
+def fetch_historical_data():
+    try:
+        # 업비트와 Binance 초기화
+        upbit = ccxt.upbit()
+        binance = ccxt.binance()
+        upbit.load_markets()
+        binance.load_markets()
+
+        # 조회 시작 시점
+        since = upbit.parse8601((pd.Timestamp.now() - pd.Timedelta(days=NUM_DAYS)).isoformat())
+
+        # 업비트 BTC/KRW 종가 데이터
+        upbit_data = upbit.fetch_ohlcv("BTC/KRW", timeframe="1d", since=since)
+        upbit_df = pd.DataFrame(upbit_data, columns=["timestamp", "open", "high", "low", "close", "volume"])
+        upbit_df["Date"] = pd.to_datetime(upbit_df["timestamp"], unit="ms")
+        upbit_df.set_index("Date", inplace=True)
+
+        # Binance BTC/USDT 종가 데이터
+        binance_data = binance.fetch_ohlcv("BTC/USDT", timeframe="1d", since=since)
+        binance_df = pd.DataFrame(binance_data, columns=["timestamp", "open", "high", "low", "close", "volume"])
+        binance_df["Date"] = pd.to_datetime(binance_df["timestamp"], unit="ms")
+        binance_df.set_index("Date", inplace=True)
+
+        # 환율 가져오기
+        exchange_rate = get_exchange_rate()
+
+        # Binance 가격을 원화로 환산
+        binance_df["Close (KRW)"] = binance_df["close"] * exchange_rate
+
+        # 김치 프리미엄 계산
+        df = pd.DataFrame({
+            "Upbit (KRW)": upbit_df["close"],
+            "Binance (KRW)": binance_df["Close (KRW)"]
+        })
+        df["Kimchi Premium (%)"] = (df["Upbit (KRW)"] - df["Binance (KRW)"]) / df["Binance (KRW)"] * 100
+
+        return df, exchange_rate
+    except Exception as e:
+        print(f"Error fetching historical data: {e}")
+        raise
+
+# 데이터 시각화
+def plot_kimchi_premium():
+    try:
+        # 데이터 가져오기
+        df, exchange_rate = fetch_historical_data()
+
+        # 현 시점의 데이터
+        current_date = df.index[-1]
+        current_upbit_price = df["Upbit (KRW)"].iloc[-1]
+        current_binance_price = df["Binance (KRW)"].iloc[-1]
+        current_premium = df["Kimchi Premium (%)"].iloc[-1]
+
+        # 결과 출력 (현 시점 데이터만)
+        print(f"현재 업비트 비트코인 가격 (KRW): {current_upbit_price:,.0f}원")
+        print(f"현재 Binance 비트코인 가격 (USD 환산): {current_binance_price:,.0f}원")
+        print(f"현재 환율 (USD → KRW): {exchange_rate:,.2f}원(모든 기간의 환율은 현재시점 환율 적용)")
+        print(f"현재 김치 프리미엄: {current_premium:.2f}%")
+
+        # 그래프 그리기
+        plt.figure(figsize=(12, 6))
+        plt.plot(df.index, df["Kimchi Premium (%)"], label="Kimchi Premium (%)", color="blue")
+        plt.axhline(0, color="red", linestyle="--", label="Parity Line (0%)")
+        plt.title(f"Kimchi Premium Over the Last {NUM_DAYS} Days (Current: {current_premium:.2f}%)")
+        plt.xlabel("Date")
+        plt.ylabel("Kimchi Premium (%)")
+        plt.legend()
+        plt.grid()
+
+        # 그래프 출력
+        plt.show()
+    except Exception as e:
+        print(f"Error plotting Kimchi Premium: {e}")
+        raise
+
+# 실행
+plot_kimchi_premium()
+
+
+#############################
+
 
 # 종목 코드 입력 필드
 col_code1, col_code2, col_code3 = st.columns(3)
