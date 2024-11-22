@@ -127,9 +127,7 @@ if show_market_cap_chart:
             autopct=lambda p: f'{p:.1f}%' if p > 0 else '',
             startangle=140,
             colors=pie_colors,
-            explode=explode,
-            shadow=True,  # 그림자 추가
-            wedgeprops={'shadow': True, 'linewidth': 0.5, 'edgecolor': 'gray'}  # 그림자와 테두리 설정
+            explode=explode
         )
         ax.set_title('Market Cap Distribution: Top 5 Coins and Others', fontsize=title_font_size)
         st.pyplot(fig)
