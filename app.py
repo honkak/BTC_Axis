@@ -270,12 +270,9 @@ if show_market_cap_chart:
 st.markdown("---")
 
 #####################################
-#김치 프리미엄 트랜드 기능
-
 # '김치프리미엄' 체크박스 추가
 show_kimchi_premium = st.checkbox("김치프리미엄 보기")
 
-# '김치프리미엄' 체크박스 선택 시 실행
 if show_kimchi_premium:
     try:
         # 환율 가져오기 함수
@@ -286,43 +283,43 @@ if show_kimchi_premium:
             data = response.json()
             return data['rates']['KRW']
 
-        # 업비트와 Binance의 데이터 가져오기
+        # 업비트와 코인게코 데이터를 사용한 김치프리미엄 계산
         def fetch_historical_data():
             upbit = ccxt.upbit()
-
-            # 대체 바이낸스 엔드포인트 사용
-            binance = ccxt.binance({
-                'urls': {
-                    'api': 'https://data.binance.com'
-                }
-            })
+            cg = CoinGeckoAPI()
 
             # 최근 1년(365일) 기준으로 강제 설정
             end_date = datetime.datetime.now()
             start_date = end_date - datetime.timedelta(days=365)
 
-            # 데이터 가져오기
-            since = int(start_date.timestamp() * 1000)  # 밀리초 단위로 변환
+            # 업비트 데이터 가져오기
+            since = int(start_date.timestamp() * 1000)
             upbit_data = upbit.fetch_ohlcv("BTC/KRW", timeframe="1d", since=since)
             upbit_df = pd.DataFrame(upbit_data, columns=["timestamp", "open", "high", "low", "close", "volume"])
             upbit_df["Date"] = pd.to_datetime(upbit_df["timestamp"], unit="ms")
             upbit_df.set_index("Date", inplace=True)
 
-            binance_data = binance.fetch_ohlcv("BTC/USDT", timeframe="1d", since=since)
-            binance_df = pd.DataFrame(binance_data, columns=["timestamp", "open", "high", "low", "close", "volume"])
-            binance_df["Date"] = pd.to_datetime(binance_df["timestamp"], unit="ms")
-            binance_df.set_index("Date", inplace=True)
+            # 코인게코 데이터를 가져오기
+            btc_market_data = cg.get_coin_market_chart_range_by_id(
+                id="bitcoin",
+                vs_currency="usd",
+                from_timestamp=int(start_date.timestamp()),
+                to_timestamp=int(end_date.timestamp())
+            )
+            cg_df = pd.DataFrame(btc_market_data["prices"], columns=["timestamp", "price_usd"])
+            cg_df["Date"] = pd.to_datetime(cg_df["timestamp"], unit="ms")
+            cg_df.set_index("Date", inplace=True)
 
             # 환율 적용
             exchange_rate = get_exchange_rate()
-            binance_df["Close (KRW)"] = binance_df["close"] * exchange_rate
+            cg_df["Close (KRW)"] = cg_df["price_usd"] * exchange_rate
 
             # 김치프리미엄 계산
             df = pd.DataFrame({
                 "Upbit (KRW)": upbit_df["close"],
-                "Binance (KRW)": binance_df["Close (KRW)"]
+                "CoinGecko (KRW)": cg_df["Close (KRW)"]
             })
-            df["Kimchi Premium (%)"] = (df["Upbit (KRW)"] - df["Binance (KRW)"]) / df["Binance (KRW)"] * 100
+            df["Kimchi Premium (%)"] = (df["Upbit (KRW)"] - df["CoinGecko (KRW)"]) / df["CoinGecko (KRW)"] * 100
             return df
 
         # 데이터 가져오기
@@ -332,7 +329,7 @@ if show_kimchi_premium:
         fig, ax = plt.subplots(figsize=(12, 6))
         ax.plot(df.index, df["Kimchi Premium (%)"], label="Kimchi Premium (%)", color="blue")
         ax.axhline(0, color="red", linestyle="--", label="Parity Line (0%)")
-        ax.set_title("Kimchi Premium Over Last 1 Year")
+        ax.set_title("Kimchi Premium Over Last 1 Year (Upbit vs CoinGecko)")
         ax.set_xlabel("Date")
         ax.set_ylabel("Kimchi Premium (%)")
         ax.legend()
@@ -341,6 +338,7 @@ if show_kimchi_premium:
         st.pyplot(fig)
     except Exception as e:
         st.error(f"김치프리미엄 데이터를 가져오거나 시각화하는 데 실패했습니다: {e}")
+
 
 
 
