@@ -49,20 +49,56 @@ if start_date > end_date:
     st.warning("시작일이 종료일보다 더 늦습니다. 날짜를 자동으로 맞바꿔 반영합니다.")
     start_date, end_date = end_date, start_date  # 날짜를 바꿈
 
-# 종목 코드 입력 필드
-col_code1, col_code2, col_code3 = st.columns(3)
+# 수평선 추가
+st.markdown("---")
 
-with col_code1:
-    code1 = st.text_input('종목코드 1', value='', placeholder='종목코드를 입력하세요 - (예시)QQQ')
+######################################
+# 'BTC 가격' 체크박스 (기본 체크 상태)
+show_btc_price_chart = st.checkbox("BTC 가격", value=True)
 
-with col_code2:
-    code2 = st.text_input('종목코드 2', value='', placeholder='종목코드를 입력하세요 - (예시)005930')
+if show_btc_price_chart:
+    try:
+        # 업비트 모듈 초기화
+        upbit = ccxt.upbit()
 
-with col_code3:
-    code3 = st.text_input('종목코드 3', value='', placeholder='종목코드를 입력하세요 - (예시)AAPL')
+        # 업비트 서비스 시작일
+        upbit_start_date = datetime.date(2017, 10, 24)
 
-# '기준시점 수익률 비교' 체크박스
-fixed_ratio = st.checkbox("기준시점 수익률 비교(Baseline return)")
+        # 조회 시작일이 업비트 서비스 시작일 이전이면 자동으로 변경
+        if start_date.date() < upbit_start_date:
+            start_date = datetime.datetime.combine(upbit_start_date, datetime.datetime.min.time())
+            st.warning("업비트 가격을 가져오므로 조회 시작일을 2017년 10월 24일 서비스 개시일로 자동 변경합니다.")
+
+        # 데이터 조회
+        since = upbit.parse8601(start_date.isoformat())
+        ohlcv = upbit.fetch_ohlcv("BTC/KRW", timeframe="1d", since=since)
+
+        if not ohlcv:
+            st.warning("선택한 기간에 대한 데이터가 없습니다. 다른 기간을 선택해 주세요.")
+        else:
+            # 데이터프레임 변환
+            df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
+            df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
+            df.set_index("Date", inplace=True)
+
+            # 꺾은선 차트 생성
+            st.write(f"{start_date.date()}부터 {end_date.date()}까지 비트코인의 업비트 원화 기준 가격")
+            fig, ax = plt.subplots(figsize=(10, 5))
+            ax.plot(df.index, df["close"], label="BTC 가격 (KRW)", color="green")
+            ax.set_title("비트코인 가격 (업비트, 원화 기준)", fontsize=16)
+            ax.set_xlabel("날짜", fontsize=12)
+            ax.set_ylabel("가격 (KRW)", fontsize=12)
+            ax.grid(True)
+            ax.legend(fontsize=12)
+            plt.xticks(rotation=45)
+            st.pyplot(fig)
+
+    except Exception as e:
+        st.error(f"비트코인 데이터를 가져오는 중 오류가 발생했습니다: {e}")
+
+
+######################################
+
 
 # 수평선 추가
 st.markdown("---")
@@ -223,3 +259,21 @@ if show_market_cap_chart:
 #         st.pyplot(fig)
 #     except Exception as e:
 #         st.error(f"김치프리미엄 데이터를 가져오거나 시각화하는 데 실패했습니다: {e}")
+
+####################
+
+# 종목 코드 입력 필드
+col_code1, col_code2, col_code3 = st.columns(3)
+
+with col_code1:
+    code1 = st.text_input('종목코드 1', value='', placeholder='종목코드를 입력하세요 - (예시)QQQ')
+
+with col_code2:
+    code2 = st.text_input('종목코드 2', value='', placeholder='종목코드를 입력하세요 - (예시)005930')
+
+with col_code3:
+    code3 = st.text_input('종목코드 3', value='', placeholder='종목코드를 입력하세요 - (예시)AAPL')
+
+# '기준시점 수익률 비교' 체크박스
+fixed_ratio = st.checkbox("기준시점 수익률 비교(Baseline return)")
+
