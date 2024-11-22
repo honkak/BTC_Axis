@@ -126,22 +126,40 @@ if show_btc_price_chart:
             plt.xticks(rotation=45)
             st.pyplot(fig)
 
+            # 1천만 원 투자 결과 계산
+            if start_price and end_price:
+                st.markdown("<h2 style='font-size: 20px;'>1천만 원을 투자했다면,</h2>", unsafe_allow_html=True)
+
+                # 초기 투자금액
+                initial_investment = 10000000  # 1천만 원
+
+                # 수익률 계산
+                return_percentage = ((end_price - start_price) / start_price) * 100
+                profit_amount = (return_percentage / 100) * initial_investment
+                total_amount = initial_investment + profit_amount
+
+                # 수익률 색상 결정
+                if return_percentage >= 0:
+                    color = 'red'  # 양수일 경우 붉은색
+                else:
+                    color = 'blue'  # 음수일 경우 파란색
+
+                # 결과 출력
+                st.markdown(
+                    f"BTC에 1천만 원을 투자했더라면, 현재 {total_amount:,.0f} 원이 되었을 것입니다. "
+                    f"(<span style='color: {color};'>수익률: {return_percentage:.2f}%</span>)",
+                    unsafe_allow_html=True,
+                )
+
     except Exception as e:
         st.error(f"비트코인 데이터를 가져오는 중 오류가 발생했습니다: {e}")
 
-
-
-
-
-
-
 ######################################
-
 
 # 수평선 추가
 st.markdown("---")
 
-##########################################################
+#####################################
 
 # 'BTC 시가총액 비율' 체크박스
 show_market_cap_chart = st.checkbox("BTC 시가총액 비율")
