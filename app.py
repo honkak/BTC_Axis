@@ -53,48 +53,67 @@ if start_date > end_date:
 st.markdown("---")
 
 ######################################
-# 'BTC 가격' 체크박스 (기본 체크 상태)
-show_btc_price_chart = st.checkbox("BTC 가격", value=True)
+# 'BTC Price (KRW)' checkbox (default checked)
+show_btc_price_chart = st.checkbox("BTC Price (KRW)", value=True)
 
 if show_btc_price_chart:
     try:
-        # 업비트 모듈 초기화
+        # Initialize Upbit module
         upbit = ccxt.upbit()
 
-        # 업비트 서비스 시작일
+        # Upbit service start date
         upbit_start_date = datetime.date(2017, 10, 24)
 
-        # 조회 시작일이 업비트 서비스 시작일 이전이면 자동으로 변경
+        # Adjust start_date if it is before Upbit's service start date
         if start_date < upbit_start_date:
             start_date = upbit_start_date
-            st.warning("업비트 가격을 가져오므로 조회 시작일을 2017년 10월 24일 서비스 개시일로 자동 변경합니다.")
+            st.warning("Start date adjusted to October 24, 2017, the launch date of Upbit.")
 
-        # 데이터 조회 (since는 timestamp 형식이어야 함)
-        since = upbit.parse8601(start_date.strftime("%Y-%m-%dT%H:%M:%SZ"))
-        ohlcv = upbit.fetch_ohlcv("BTC/KRW", timeframe="1d", since=since)
+        # Convert dates to UNIX timestamp
+        since = int(datetime.datetime.combine(start_date, datetime.datetime.min.time()).timestamp() * 1000)
+        end_timestamp = int(datetime.datetime.combine(end_date, datetime.datetime.max.time()).timestamp() * 1000)
+
+        # Fetch data in batches
+        ohlcv = []
+        from_time = since
+        while True:
+            data = upbit.fetch_ohlcv("BTC/KRW", timeframe="1d", since=from_time, limit=200)
+            if not data:
+                break
+            ohlcv.extend(data)
+            last_time = data[-1][0]
+            if last_time >= end_timestamp or last_time == from_time:
+                break
+            from_time = last_time + 1
 
         if not ohlcv:
-            st.warning("선택한 기간에 대한 데이터가 없습니다. 다른 기간을 선택해 주세요.")
+            st.warning("No data available for the selected period. Please choose a different range.")
         else:
-            # 데이터프레임 변환
+            # Convert to DataFrame
             df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
             df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
             df.set_index("Date", inplace=True)
+            df = df[(df.index >= start_date) & (df.index <= end_date)]
 
-            # 꺾은선 차트 생성
-            st.write(f"{start_date}부터 {end_date}까지 비트코인의 업비트 원화 기준 가격")
+            # Handle case where data is missing up to the current date
+            if df.empty or df.index[-1].date() < end_date.date():
+                st.warning("Data may not be available up to the selected end date. Latest data is shown.")
+
+            # Line chart for BTC price in KRW
+            st.write(f"BTC Price in KRW: {start_date} to {end_date}")
             fig, ax = plt.subplots(figsize=(10, 5))
-            ax.plot(df.index, df["close"], label="BTC 가격 (KRW)", color="green")
-            ax.set_title("비트코인 가격 (업비트, 원화 기준)", fontsize=16)
-            ax.set_xlabel("날짜", fontsize=12)
-            ax.set_ylabel("가격 (KRW)", fontsize=12)
+            ax.plot(df.index, df["close"], label="BTC Price (KRW)", color="green")
+            ax.set_title("Bitcoin Price in KRW (Upbit)", fontsize=16)
+            ax.set_xlabel("Date", fontsize=12)
+            ax.set_ylabel("Price (KRW)", fontsize=12)
             ax.grid(True)
             ax.legend(fontsize=12)
             plt.xticks(rotation=45)
             st.pyplot(fig)
 
     except Exception as e:
-        st.error(f"비트코인 데이터를 가져오는 중 오류가 발생했습니다: {e}")
+        st.error(f"An error occurred while fetching Bitcoin data: {e}")
+
 
 
 
