@@ -82,7 +82,7 @@ if show_market_cap_chart:
         # 조회 기간이 365일을 초과하는 경우 시작일을 자동으로 변경
         if date_diff > 365:
             start_date = end_date - datetime.timedelta(days=365)
-            st.warning("조회 기간이 365일 이내로 제한되어 있습니다. 조회 시작일을 자동으로 변경합니다.")
+            st.warning("조회 기간이 365일 이내로 제한되어 있습니다. 조회기간을 자동으로 365일로 변경합니다.")
 
         # 상위 암호화폐 시가총액 가져오기 (최신 데이터)
         top_coins = cg.get_coins_markets(vs_currency='usd', order='market_cap_desc', per_page=100, page=1)
