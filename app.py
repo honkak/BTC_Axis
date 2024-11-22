@@ -99,7 +99,7 @@ if show_market_cap_chart:
         # 파이 차트 생성
         fig, ax = plt.subplots(figsize=(8, 6))
         ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=140)
-        ax.set_title('Global Cryptocurrency Market Cap Distribution')
+        ax.set_title('비트코인 도미넌스_전체 암호화폐 시장에서 BTC가 차지하는 비율(%)')
         st.pyplot(fig)
     except Exception as e:
         st.error(f"암호화폐 시가총액 데이터를 불러오는 데 실패했습니다: {e}")
