@@ -6,3 +6,4 @@ plotly>=5.0.0
 yfinance
 streamlit-analytics
 pycoingecko
+ccxt
