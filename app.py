@@ -27,7 +27,7 @@ import ccxt
 # set_korean_font()
 
 # 서비스 제목 입력
-st.markdown("<h2 style='font-size: 24px; text-align: center;'>다빈치 BTC Axis</h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='font-size: 30px; text-align: center;'>다빈치 BTC AXIS</h2>", unsafe_allow_html=True)
 
 # 날짜 입력 (조회 시작일과 종료일을 같은 행에 배치)
 col_start_date, col_end_date = st.columns(2)
