@@ -90,29 +90,8 @@ if show_btc_price_chart:
             st.warning("No data available for the selected period. Please choose a different range.")
         else:
             # Convert to DataFrame
-            df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
-            df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
-            df.set_index("Date", inplace=True)
-            df = df[(df.index >= start_date) & (df.index <= end_date)]
+            df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "l
 
-            # Handle case where data is missing up to the current date
-            if df.empty or df.index[-1].date() < end_date.date():
-                st.warning("Data may not be available up to the selected end date. Latest data is shown.")
-
-            # Line chart for BTC price in KRW
-            st.write(f"BTC Price in KRW: {start_date} to {end_date}")
-            fig, ax = plt.subplots(figsize=(10, 5))
-            ax.plot(df.index, df["close"], label="BTC Price (KRW)", color="green")
-            ax.set_title("Bitcoin Price in KRW (Upbit)", fontsize=16)
-            ax.set_xlabel("Date", fontsize=12)
-            ax.set_ylabel("Price (KRW)", fontsize=12)
-            ax.grid(True)
-            ax.legend(fontsize=12)
-            plt.xticks(rotation=45)
-            st.pyplot(fig)
-
-    except Exception as e:
-        st.error(f"An error occurred while fetching Bitcoin data: {e}")
 
 
 
