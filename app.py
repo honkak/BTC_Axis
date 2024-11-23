@@ -419,7 +419,7 @@ if show_market_cap_chart:
         sizes = [coin['market_cap'] for coin in top_5_coins] + [others_market_cap]
 
         # Bitcoin 색상 및 다른 조각 색상 설정
-        pie_colors = ['#4a90d6'] + ['#66b3ff', '#99ff99', '#ffcc99', '#c2c2f0', '#ffb3e6']
+        pie_colors = ['#5ba6e1'] + ['#66b3ff', '#99ff99', '#ffcc99', '#c2c2f0', '#ffb3e6']
 
         # 모든 조각을 5%씩 분리
         explode = [0.05 for _ in labels]
