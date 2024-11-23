@@ -263,32 +263,62 @@ if fixed_ratio:
         else:
             st.warning("조회할 수 있는 데이터가 없습니다.")
 
-# 원화 마켓 코인 리스트
-krw_market_coins = [
-    "BTC", "ETH", "XRP", "ADA", "SOL", "DOT", "DOGE", "LINK", "LTC", "BCH",
-    "XLM", "TRX", "EOS", "VET", "XTZ", "ATOM", "FIL", "ETC", "NEO", "QTUM",
-    "ICX", "ONT", "ZIL", "SNT", "MFT", "CVC", "STMX", "PUNDIX", "OMG", "WAXP",
-    "ENJ", "MANA", "SAND", "AXS", "CHZ", "BORA", "PLA", "AQT", "MLK", "SSX",
-    "MBL", "MED", "AHT", "DKA", "UPP", "FCT2", "AERGO", "ORBS", "KAVA", "STRK",
-    "STX", "MATIC", "SXP", "ANKR", "SRM", "XEC", "BTT", "TWT", "OCEAN", "OGN",
-    "ONIT", "OXT", "PROM", "PSG", "QTCON", "RAD", "RAY", "REI", "RLC", "RLY",
-    "RNDR", "RSR", "RVN", "SNX", "STG", "SUN", "T", "TUSD", "USDP", "VAL", "YGG",
-    "SPURS"
+# 주어진 코인 이름과 코인 코드
+coins = [
+    ("비트코인", "BTC"), ("이더리움", "ETH"), ("리플", "XRP"), ("에이다", "ADA"),
+    ("솔라나", "SOL"), ("폴카닷", "DOT"), ("도지코인", "DOGE"), ("체인링크", "LINK"),
+    ("라이트코인", "LTC"), ("비트코인캐시", "BCH"), ("스텔라루멘", "XLM"), ("트론", "TRX"),
+    ("이오스", "EOS"), ("비체인", "VET"), ("테조스", "XTZ"), ("코스모스", "ATOM"),
+    ("파일코인", "FIL"), ("이더리움클래식", "ETC"), ("네오", "NEO"), ("퀀텀", "QTUM"),
+    ("아이콘", "ICX"), ("온톨로지", "ONT"), ("질리카", "ZIL"), ("스테이터스네트워크토큰", "SNT"),
+    ("메인프레임", "MFT"), ("시빅", "CVC"), ("스톰엑스", "STMX"), ("펀디엑스", "PUNDIX"),
+    ("오미세고", "OMG"), ("왁스", "WAXP"), ("엔진코인", "ENJ"), ("디센트럴랜드", "MANA"),
+    ("샌드박스", "SAND"), ("엑시인피니티", "AXS"), ("칠리즈", "CHZ"), ("보라", "BORA"),
+    ("플레이댑", "PLA"), ("알파쿼크", "AQT"), ("밀크", "MLK"), ("썸씽", "SSX"),
+    ("무비블록", "MBL"), ("메디블록", "MED"), ("아하토큰", "AHT"), ("디카르고", "DKA"),
+    ("센티넬프로토콜", "UPP"), ("피르마체인", "FCT2"), ("아르고", "AERGO"), ("오브스", "ORBS"),
+    ("카바", "KAVA"), ("스트라이크", "STRK"), ("스택스", "STX"), ("폴리곤", "MATIC"),
+    ("스와이프", "SXP"), ("앵커", "ANKR"), ("세럼", "SRM"), ("솔라", "SXP"),
+    ("이캐시", "XEC"), ("비트토렌트", "BTT"), ("트러스트월렛토큰", "TWT"), ("오션프로토콜", "OCEAN"),
+    ("오리진프로토콜", "OGN"), ("온버프", "ONIT"), ("오키드", "OXT"), ("프롬", "PROM"),
+    ("파리생제르맹", "PSG"), ("퀴즈톡", "QTCON"), ("래드웍스", "RAD"), ("레이디움", "RAY"),
+    ("레이", "REI"), ("아이젝", "RLC"), ("랠리", "RLY"), ("랜더토큰", "RNDR"),
+    ("리저브라이트", "RSR"), ("레이븐코인", "RVN"), ("신세틱스", "SNX"), ("스타게이트파이낸스", "STG"),
+    ("썬", "SUN"), ("쓰레쉬홀드", "T"), ("트루USD", "TUSD"), ("팍스달러", "USDP"),
+    ("밸리디티", "VAL"), ("일드길드게임즈", "YGG"), ("토트넘훗스퍼", "SPURS")
 ]
 
-# Session State 초기화
-if "show_list" not in st.session_state:
-    st.session_state.show_list = False  # 리스트 숨김 상태 기본값
+# 6열 데이터프레임 구성
+columns = ["코인 이름 1", "코인 코드 1", "코인 이름 2", "코인 코드 2", "코인 이름 3", "코인 코드 3"]
+data = []
 
-# 버튼 클릭으로 상태 토글
-if st.button("원화 마켓 코인 리스트 토글"):
-    st.session_state.show_list = not st.session_state.show_list
+for i in range(0, len(coins), 3):
+    row = []
+    for j in range(3):
+        if i + j < len(coins):
+            row.extend(coins[i + j])
+        else:
+            row.extend(["", ""])  # 빈칸 채우기
+    data.append(row)
 
-# 리스트 출력 여부 확인
-if st.session_state.show_list:
-    df = pd.DataFrame({"코인": krw_market_coins})
-    st.markdown("### 원화 마켓 코인 리스트")
-    st.dataframe(df, use_container_width=True)
+df = pd.DataFrame(data, columns=columns)
+
+# 스타일링 함수 정의
+def highlight_columns(x):
+    style = pd.DataFrame("", index=x.index, columns=x.columns)
+    style.iloc[:, [0, 2, 4]] = "background-color: lightgrey;"  # 1, 3, 5열 회색
+    return style
+
+# 버튼으로 테이블 표시
+if "show_table" not in st.session_state:
+    st.session_state.show_table = False
+
+if st.button("코인 리스트 토글"):
+    st.session_state.show_table = not st.session_state.show_table
+
+if st.session_state.show_table:
+    st.markdown("### 코인 리스트 (6열 구성)")
+    st.dataframe(df.style.apply(highlight_columns, axis=None), use_container_width=True)
 
 ######################################
 
