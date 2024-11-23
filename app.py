@@ -263,6 +263,27 @@ if fixed_ratio:
         else:
             st.warning("조회할 수 있는 데이터가 없습니다.")
 
+# 원화 마켓 코인 리스트
+krw_market_coins = [
+    "BTC", "ETH", "XRP", "ADA", "SOL", "DOT", "DOGE", "LINK", "LTC", "BCH",
+    "XLM", "TRX", "EOS", "VET", "XTZ", "ATOM", "FIL", "ETC", "NEO", "QTUM",
+    "ICX", "ONT", "ZIL", "SNT", "MFT", "CVC", "STMX", "PUNDIX", "OMG", "WAXP",
+    "ENJ", "MANA", "SAND", "AXS", "CHZ", "BORA", "PLA", "AQT", "MLK", "SSX",
+    "MBL", "MED", "AHT", "DKA", "UPP", "FCT2", "AERGO", "ORBS", "KAVA", "STRK",
+    "STX", "MATIC", "SXP", "ANKR", "SRM", "XEC", "BTT", "TWT", "OCEAN", "OGN",
+    "ONIT", "OXT", "PROM", "PSG", "QTCON", "RAD", "RAY", "REI", "RLC", "RLY",
+    "RNDR", "RSR", "RVN", "SNX", "STG", "SUN", "T", "TUSD", "USDP", "VAL", "YGG",
+    "SPURS"
+]
+
+# 버튼 표시
+if st.button("업비트 코인 리스트 보기"):
+    # 리스트를 표시
+    st.markdown("### 업비트 코인 리스트")
+    for coin in krw_market_coins:
+        st.write(f"- {coin}")
+
+
 ######################################
 
 # 수평선 추가
