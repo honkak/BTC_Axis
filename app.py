@@ -335,7 +335,11 @@ if show_kimchi_premium:
 
         # 현재 김치프리미엄 값 출력
         if current_premium is not None:
-            st.markdown(f"<h3>현재 김치프리미엄: {current_premium:.2f}%</h3>", unsafe_allow_html=True)
+            st.markdown(
+                f"<p style='font-size: 16px;'>현재 Bitcoin 김치 프리미엄: <b>{current_premium:.2f}%</b></p>",
+                unsafe_allow_html=True
+            )
+
 
         st.pyplot(fig)
     except Exception as e:
