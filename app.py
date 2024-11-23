@@ -233,6 +233,9 @@ if fixed_ratio:
     with col_cb3:
         add_apartment = st.checkbox("서울아파트/BTC")
 
+    # 서울아파트/BTC 데이터 저장 변수 초기화
+    seoul_apartment_data = None
+
     # 서울아파트/BTC 계산 추가
     if add_apartment:
         try:
