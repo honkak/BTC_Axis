@@ -222,7 +222,7 @@ if fixed_ratio:
     with col_cb2:
         add_krw = st.checkbox("KRW/BTC(원화)")
     with col_cb3:
-        add_apartment = st.checkbox("SPY/BTC(미국S&P500)")
+        add_apartment = st.checkbox("SPY/BTC(미국S&P500)(개발예정)")
 
     # 기준시점 수익률 비교 차트 생성
     ohlcv_data = {}
