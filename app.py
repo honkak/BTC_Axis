@@ -58,7 +58,7 @@ st.markdown("---")
 #BTC 가격 트랜드 기능
 
 # 'BTC 가격' 체크박스 (기본 체크 상태)
-show_btc_price_chart = st.checkbox("BTC 가격", value=False)
+show_btc_price_chart = st.checkbox("Bitcoin 가격", value=False)
 
 if show_btc_price_chart:
     try:
