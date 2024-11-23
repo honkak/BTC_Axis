@@ -320,6 +320,9 @@ if show_kimchi_premium:
         # 데이터 가져오기
         df = fetch_historical_data()
 
+        # 현재 김치프리미엄 계산
+        current_premium = df["Kimchi Premium (%)"].iloc[-1] if not df.empty else None
+
         # 차트 그리기
         fig, ax = plt.subplots(figsize=(12, 6))
         ax.plot(df.index, df["Kimchi Premium (%)"], label="Kimchi Premium (%)", color="blue")
@@ -330,9 +333,14 @@ if show_kimchi_premium:
         ax.legend()
         ax.grid()
 
+        # 현재 김치프리미엄 값 출력
+        if current_premium is not None:
+            st.markdown(f"<h3>현재 김치프리미엄: {current_premium:.2f}%</h3>", unsafe_allow_html=True)
+
         st.pyplot(fig)
     except Exception as e:
         st.error(f"김치프리미엄 데이터를 가져오거나 시각화하는 데 실패했습니다: {e}")
+
 
 
 
