@@ -58,7 +58,7 @@ st.markdown("---")
 #BTC 가격 트랜드 기능
 
 # 'BTC 가격' 체크박스 (기본 체크 상태)
-show_btc_price_chart = st.checkbox("BTC 가격", value=True)
+show_btc_price_chart = st.checkbox("BTC 가격", value=False)
 
 if show_btc_price_chart:
     try:
@@ -167,6 +167,27 @@ if show_btc_price_chart:
     except Exception as e:
         st.error(f"비트코인 데이터를 가져오는 중 오류가 발생했습니다: {e}")
 
+######################################
+
+# 수평선 추가
+st.markdown("---")
+
+#####################################
+
+# 종목 코드 입력 필드
+col_code1, col_code2, col_code3 = st.columns(3)
+
+with col_code1:
+    code1 = st.text_input('종목코드 1', value='', placeholder='종목코드를 입력하세요 - (예시)QQQ')
+
+with col_code2:
+    code2 = st.text_input('종목코드 2', value='', placeholder='종목코드를 입력하세요 - (예시)005930')
+
+with col_code3:
+    code3 = st.text_input('종목코드 3', value='', placeholder='종목코드를 입력하세요 - (예시)AAPL')
+
+# '기준시점 수익률 비교' 체크박스
+fixed_ratio = st.checkbox("비트코인 기준 자산흐름(Bitcoin Axis)")
 
 
 ######################################
@@ -371,18 +392,4 @@ if show_kimchi_premium:
 #############################
 
 
-# 종목 코드 입력 필드
-col_code1, col_code2, col_code3 = st.columns(3)
-
-with col_code1:
-    code1 = st.text_input('종목코드 1', value='', placeholder='종목코드를 입력하세요 - (예시)QQQ')
-
-with col_code2:
-    code2 = st.text_input('종목코드 2', value='', placeholder='종목코드를 입력하세요 - (예시)005930')
-
-with col_code3:
-    code3 = st.text_input('종목코드 3', value='', placeholder='종목코드를 입력하세요 - (예시)AAPL')
-
-# '기준시점 수익률 비교' 체크박스
-fixed_ratio = st.checkbox("기준시점 수익률 비교(Baseline return)")
 
