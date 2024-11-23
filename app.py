@@ -732,7 +732,7 @@ st.markdown("---")
 # 'USDT 1달러 추종 확인' 체크박스 추가
 show_usdt_chart = st.checkbox("USDT 1달러 추종 확인")
 
-# 환율 데이터를 가져오는 함수
+# 환율 데이터를 가져오는 함수 (USD to KRW)
 def fetch_usd_to_krw_rate():
     url = "https://api.exchangerate-api.com/v4/latest/USD"  # 예시 환율 API
     response = requests.get(url)
@@ -763,6 +763,15 @@ def fetch_usdt_prices():
     data = response.json()
     return data["prices"]
 
+# 실제 환율 데이터를 가져오는 함수 (USD to KRW 과거 데이터)
+def fetch_krw_usd_historical():
+    url = "https://api.exchangerate-api.com/v4/latest/USD"
+    response = requests.get(url)
+    response.raise_for_status()
+    data = response.json()
+    return [{"date": datetime.utcnow() - pd.Timedelta(days=i), "price": data["rates"]["KRW"]} for i in range(100)]
+
+
 if show_usdt_chart:
     try:
         # CoinGecko에서 USDT/USD 데이터 가져오기
@@ -779,6 +788,11 @@ if show_usdt_chart:
         df_usdt_krw = pd.DataFrame(usdt_krw_data)
         df_usdt_krw["date"] = pd.to_datetime(df_usdt_krw["date"])
         df_usdt_krw.rename(columns={"price": "price_krw"}, inplace=True)
+
+        # 실제 KRW/USD 데이터 가져오기
+        krw_usd_historical = fetch_krw_usd_historical()
+        df_krw_usd = pd.DataFrame(krw_usd_historical)
+        df_krw_usd["date"] = pd.to_datetime(df_krw_usd["date"])
 
         # USD 기준 차트 생성
         st.write("지난 100일 동안의 USDT 가격 변화 (USD 기준)")
@@ -798,6 +812,7 @@ if show_usdt_chart:
         fig_krw, ax_krw = plt.subplots(figsize=(10, 6))
         ax_krw.plot(df_usdt_krw["date"], df_usdt_krw["price_krw"], label="USDT/KRW Price (Upbit)", color="blue")
         ax_krw.plot(df_usdt_usd["date"], df_usdt_usd["price_krw"], label=f"USDT/USD Price x {usd_to_krw_rate:.0f} (Exchange Rate)", color="orange")
+        ax_krw.plot(df_krw_usd["date"], df_krw_usd["price"], label="Actual KRW/USD Rate", color="purple")
         ax_krw.axhline(y=usd_to_krw_rate, color="green", linestyle="--", label=f"Target Price ({usd_to_krw_rate:.0f} KRW)")
         ax_krw.set_title("USDT/KRW Price Over 100 Days")
         ax_krw.set_xlabel("Date")
@@ -805,6 +820,9 @@ if show_usdt_chart:
         ax_krw.legend()
         ax_krw.grid()
         st.pyplot(fig_krw)
+
+    except Exception as e:
+        st.error(f"데이터를 가져오는 중 오류가 발생했습니다: {e}")
 
     except Exception as e:
         st.error(f"데이터를 가져오는 중 오류가 발생했습니다: {e}")
