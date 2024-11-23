@@ -734,39 +734,7 @@ show_usdt_chart = st.checkbox("USDT 1달러 추종 확인")
 
 # 실제 KRW/USD 과거 데이터를 가져오는 함수
 def fetch_krw_usd_historical():
-    # 환율 API 호출 (예: 한국은행 또는 다른 신뢰 가능한 소스)
-    url = "https://api.exchangerate-api.com/v4/latest/USD"  # 참고용 API
-    response = requests.get(url)
-    response.raise_for_status()
-    data = response.json()
-
-    # 환율 데이터를 과거 100일 동안 변동 데이터로 구성
-    today = pd.Timestamp.now()
-    dates = pd.date_range(end=today, periods=100).to_pydatetime()
-    rates = [data["rates"]["KRW"] + (i % 10 - 5) * 0.5 for i in range(100)]  # 임시 변동 시뮬레이션
-    return [{"date": date, "price": rate} for date, rate in zip(dates, rates)]
-
-# 업비트 USDT/KRW 데이터
-def fetch_usdt_krw_upbit():
-    url = "https://api.upbit.com/v1/candles/days"
-    params = {"market": "KRW-USDT", "count": 100}
-    response = requests.get(url, params=params)
-    response.raise_for_status()
-    data = response.json()
-    return [{"date": item["candle_date_time_utc"], "price": item["trade_price"]} for item in data]
-
-# USDT/USD 데이터
-def fetch_usdt_prices():
-    url = "https://api.coingecko.com/api/v3/coins/tether/market_chart"
-    params = {"vs_currency": "usd", "days": "100", "interval": "daily"}
-    response = requests.get(url, params=params)
-    response.raise_for_status()
-    data = response.json()
-    return data["prices"]
-
-# KRW/USD 과거 데이터 생성
-def fetch_krw_usd_historical():
-    url = "https://api.exchangerate-api.com/v4/latest/USD"
+    url = "https://api.exchangerate-api.com/v4/latest/USD"  # 예시 API
     response = requests.get(url)
     response.raise_for_status()
     data = response.json()
@@ -777,6 +745,31 @@ def fetch_krw_usd_historical():
     rates = [data["rates"]["KRW"]] * 100  # 고정된 환율로 데이터 생성
     return [{"date": date, "price": rate} for date, rate in zip(dates, rates)]
 
+# 환율 데이터를 가져오는 함수
+def fetch_usd_to_krw_rate():
+    url = "https://api.exchangerate-api.com/v4/latest/USD"
+    response = requests.get(url)
+    response.raise_for_status()
+    data = response.json()
+    return data["rates"]["KRW"]
+
+# USDT/KRW 데이터를 가져오는 함수
+def fetch_usdt_krw_upbit():
+    url = "https://api.upbit.com/v1/candles/days"
+    params = {"market": "KRW-USDT", "count": 100}
+    response = requests.get(url, params=params)
+    response.raise_for_status()
+    data = response.json()
+    return [{"date": item["candle_date_time_utc"], "price": item["trade_price"]} for item in data]
+
+# USDT/USD 데이터를 가져오는 함수
+def fetch_usdt_prices():
+    url = "https://api.coingecko.com/api/v3/coins/tether/market_chart"
+    params = {"vs_currency": "usd", "days": "100", "interval": "daily"}
+    response = requests.get(url, params=params)
+    response.raise_for_status()
+    data = response.json()
+    return data["prices"]
 
 if show_usdt_chart:
     try:
@@ -795,6 +788,7 @@ if show_usdt_chart:
         # 환율 데이터 가져오기
         krw_usd_historical = fetch_krw_usd_historical()
         df_krw_usd = pd.DataFrame(krw_usd_historical)
+        df_krw_usd["date"] = pd.to_datetime(df_krw_usd["date"])
 
         # USD 기준 차트
         st.write("지난 100일 동안의 USDT 가격 변화 (USD 기준)")
@@ -815,7 +809,7 @@ if show_usdt_chart:
         ax_krw.plot(df_usdt_krw["date"], df_usdt_krw["price_krw"], label="USDT/KRW Price (Upbit)", color="blue")
         ax_krw.plot(df_usdt_usd["date"], df_usdt_usd["price_krw"], label=f"USDT/USD Price x {usd_to_krw_rate:.0f} (Exchange Rate)", color="orange")
         ax_krw.plot(df_krw_usd["date"], df_krw_usd["price"], label="Actual KRW/USD Rate", color="purple")
-        ax_krw.axhline(y=usd_to_krw_rate, color="green", linestyle="--", label=f"Target Price ({usd_to_krw_rate:.0f} KRW)")
+        ax_krw.axhline(y=1400, color="green", linestyle="--", label="Target KRW/USD Rate (1400 KRW)")
         ax_krw.set_title("USDT/KRW Price Over 100 Days")
         ax_krw.set_xlabel("Date")
         ax_krw.set_ylabel("Price (KRW)")
