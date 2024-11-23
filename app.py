@@ -348,14 +348,6 @@ for i in range(0, len(coins), 3):
 
 df_coins = pd.DataFrame(data, columns=columns)
 
-# 주식/ETF 데이터 예시
-stocks = [
-    ("애플", "AAPL"), ("테슬라", "TSLA"), ("아마존", "AMZN"),
-    ("구글", "GOOGL"), ("마이크로소프트", "MSFT"), ("엔비디아", "NVDA")
-]
-columns_etf = ["종목명1", "종목코드1", "종목명2", "종목코드2", "종목명3", "종목코드3"]
-data_etf = []
-
 for i in range(0, len(stocks), 3):
     row = []
     for j in range(3):
