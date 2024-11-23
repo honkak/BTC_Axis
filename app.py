@@ -173,6 +173,9 @@ if show_btc_price_chart:
 st.markdown("---")
 
 #####################################
+# '비트코인 기준 자산흐름' 체크박스
+fixed_ratio = st.checkbox("비트코인 기준 자산흐름(Bitcoin Axis)_기준시점수익률")
+
 def fetch_full_ohlcv(exchange, symbol, timeframe, since, until):
     """업비트 API를 통해 전체 데이터를 가져오는 함수"""
     all_data = []
@@ -187,10 +190,6 @@ def fetch_full_ohlcv(exchange, symbol, timeframe, since, until):
             st.warning(f"{symbol} 데이터를 가져오는 중 문제가 발생했습니다: {e}")
             break
     return all_data
-
-
-# '비트코인 기준 자산흐름' 체크박스
-fixed_ratio = st.checkbox("비트코인 기준 자산흐름(Bitcoin Axis)_기준시점수익률")
 
 if fixed_ratio:
     # 종목 코드 입력 필드
@@ -235,9 +234,6 @@ if fixed_ratio:
                 df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
                 df.set_index("Date", inplace=True)
 
-                # 디버깅: 데이터프레임 범위 확인
-                st.write(f"{code}/BTC 데이터프레임:", df)
-
                 # 기간 필터링
                 df = df.loc[start_datetime:end_datetime]
                 ohlcv_data[f"{code}/BTC"] = df["close"]
@@ -274,6 +270,9 @@ if fixed_ratio:
 
         fig, ax = plt.subplots(figsize=(12, 6))
         ax.set_ylabel("Percentage Change (%)", fontsize=12)
+
+        # 0%에 붉은 점선 추가
+        ax.axhline(y=0, color="red", linestyle="--", linewidth=1, label="0% Baseline")
 
         for column in df_combined.columns:
             ax.plot(df_combined.index, df_combined[column], label=column)
