@@ -213,6 +213,14 @@ if fixed_ratio:
     if add_spy:
         codes.append("SPY/BTC")  # 현재 SPY는 데이터 로직 미구현
 
+    # 날짜 변환 (datetime.date → datetime.datetime)
+    try:
+        start_datetime = datetime.datetime.combine(start_date, datetime.datetime.min.time())
+        end_datetime = datetime.datetime.combine(end_date, datetime.datetime.max.time())
+    except NameError:
+        st.error("start_date와 end_date가 상위 코드에서 정의되지 않았습니다.")
+        st.stop()
+
     if codes:
         ohlcv_data = {}
         for code in codes:
