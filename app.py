@@ -370,7 +370,7 @@ with col_button1:
     if st.button("코인 리스트"):
         st.session_state.show_coins = not st.session_state.show_coins
         st.session_state.show_etf = False  # 다른 버튼 상태 초기화
-# with col_button2:
+# with col_button2:         #주석만 해제하면 버튼 바로 나타남
 #     if st.button("주식/ETF 리스트"):
 #         st.session_state.show_etf = not st.session_state.show_etf
 #         st.session_state.show_coins = False  # 다른 버튼 상태 초기화
