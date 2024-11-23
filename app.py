@@ -200,10 +200,7 @@ if fixed_ratio:
     except NameError:
         st.error("start_date와 end_date가 상위 코드에서 정의되지 않았습니다.")
         st.stop()
-
-    # # 체크박스 (차트 하단)
-    # st.markdown("---")
-    # st.markdown("### 통화 데이터 비교")
+        
     col_cb1, col_cb2 = st.columns(2)
     with col_cb1:
         add_usd = st.checkbox("USD/BTC(달러)")
@@ -220,6 +217,11 @@ if fixed_ratio:
                 df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
                 df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
                 df.set_index("Date", inplace=True)
+                
+                # 디버깅용 로그
+                st.write(f"{code}/BTC 데이터프레임 확인:", df.tail())
+                
+                # 데이터 필터링
                 df = df.loc[start_datetime:end_datetime]
                 ohlcv_data[f"{code}/BTC"] = df["close"]
             except Exception as e:
@@ -232,6 +234,10 @@ if fixed_ratio:
             df = pd.DataFrame(btc_usdt, columns=["timestamp", "open", "high", "low", "close", "volume"])
             df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
             df.set_index("Date", inplace=True)
+            
+            # 디버깅용 로그
+            st.write("USD/BTC 데이터프레임 확인:", df.tail())
+            
             df = df.loc[start_datetime:end_datetime]
             ohlcv_data["USD/BTC"] = 1 / df["close"]
         except Exception as e:
@@ -243,6 +249,10 @@ if fixed_ratio:
             df = pd.DataFrame(btc_krw, columns=["timestamp", "open", "high", "low", "close", "volume"])
             df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
             df.set_index("Date", inplace=True)
+            
+            # 디버깅용 로그
+            st.write("KRW/BTC 데이터프레임 확인:", df.tail())
+            
             df = df.loc[start_datetime:end_datetime]
             ohlcv_data["KRW/BTC"] = 1 / df["close"]
         except Exception as e:
@@ -267,7 +277,6 @@ if fixed_ratio:
         st.pyplot(fig)
     else:
         st.warning("조회할 수 있는 데이터가 없습니다.")
-
 # 주어진 코인 이름과 코인 코드
 coins = [
     ("이더리움", "ETH"), ("리플", "XRP"), ("에이다", "ADA"),
