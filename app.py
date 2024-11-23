@@ -190,7 +190,7 @@ if fixed_ratio:
         code3 = st.text_input('종목코드 3', value='', placeholder='종목코드를 입력하세요 - (예시)ADA')
 
     # '기준시점 수익률 비교' 체크박스
-    baseline_return = st.checkbox("기준시점 수익률 비교(Baseline return)")
+    baseline_return = st.checkbox("기준시점 수익률 비교(Baseline return)", value=True)
 
     # 업비트 모듈 초기화
     upbit = ccxt.upbit()
