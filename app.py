@@ -121,25 +121,25 @@ if show_btc_price_chart:
             else:
                 st.warning(f"No closing price data available for {end_date}.")
 
-                # 꺾은선 차트 생성
-                if not df.empty:
-                    st.write(f"BTC Price in KRW: {start_date} to {end_date}")
-                    fig, ax = plt.subplots(figsize=(10, 5))
-                    ax.plot(df.index, df["close"], label="BTC Price (KRW)", color="green")
-                
-                    # 세로축을 100M 단위로 변환
-                    def format_krw(value, tick_number):
-                        return f"{value / 1e8:.1f} 100M"  # 100M 단위로 변환
-                
-                    ax.yaxis.set_major_formatter(ticker.FuncFormatter(format_krw))
-                
-                    ax.set_title("Bitcoin Price in KRW (Upbit)", fontsize=16)
-                    ax.set_xlabel("Date", fontsize=12)
-                    ax.set_ylabel("Price (100M KRW)", fontsize=12)  # 세로축 단위 표시 변경
-                    ax.grid(True)
-                    ax.legend(fontsize=12)
-                    plt.xticks(rotation=45)
-                    st.pyplot(fig)
+            # 꺾은선 차트 생성
+            if not df.empty:
+                st.write(f"BTC Price in KRW: {start_date} to {end_date}")
+                fig, ax = plt.subplots(figsize=(10, 5))
+                ax.plot(df.index, df["close"], label="BTC Price (KRW)", color="green")
+            
+                # 세로축을 100M 단위로 변환
+                def format_krw(value, tick_number):
+                    return f"{value / 1e8:.1f} 100M"  # 100M 단위로 변환
+            
+                ax.yaxis.set_major_formatter(ticker.FuncFormatter(format_krw))
+            
+                ax.set_title("Bitcoin Price in KRW (Upbit)", fontsize=16)
+                ax.set_xlabel("Date", fontsize=12)
+                ax.set_ylabel("Price (100M KRW)", fontsize=12)  # 세로축 단위 표시 변경
+                ax.grid(True)
+                ax.legend(fontsize=12)
+                plt.xticks(rotation=45)
+                st.pyplot(fig)
 
                         
             # 1천만 원 투자 결과 계산
