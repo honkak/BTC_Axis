@@ -283,9 +283,9 @@ if show_kimchi_premium:
             upbit = ccxt.upbit()
             cg = CoinGeckoAPI()
 
-            # 최근 1년(365일) 기준으로 강제 설정
+            # 최근 100일 기준으로 설정
             end_date = datetime.datetime.now()
-            start_date = end_date - datetime.timedelta(days=365)
+            start_date = end_date - datetime.timedelta(days=100)
 
             # 업비트 데이터 가져오기
             since = int(start_date.timestamp() * 1000)
@@ -324,7 +324,7 @@ if show_kimchi_premium:
         fig, ax = plt.subplots(figsize=(12, 6))
         ax.plot(df.index, df["Kimchi Premium (%)"], label="Kimchi Premium (%)", color="blue")
         ax.axhline(0, color="red", linestyle="--", label="Parity Line (0%)")
-        ax.set_title("Kimchi Premium Over Last 1 Year (Upbit vs CoinGecko)")
+        ax.set_title("Kimchi Premium Over Last 100 Days (Upbit vs CoinGecko)")
         ax.set_xlabel("Date")
         ax.set_ylabel("Kimchi Premium (%)")
         ax.legend()
@@ -333,6 +333,7 @@ if show_kimchi_premium:
         st.pyplot(fig)
     except Exception as e:
         st.error(f"김치프리미엄 데이터를 가져오거나 시각화하는 데 실패했습니다: {e}")
+
 
 
 #############################
