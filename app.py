@@ -363,6 +363,9 @@ if fixed_ratio:
 
             # 서울아파트 데이터 저장
             seoul_apartment_data = merged_df.set_index("Date")["Seoul/BTC"]
+
+            st.write("보간된 서울아파트 데이터", seoul_df)
+            st.write("보간된 BTC 데이터", btc_df)
             
         except Exception as e:
             st.error(f"서울아파트/BTC 데이터를 계산하는 중 오류가 발생했습니다: {e}")
