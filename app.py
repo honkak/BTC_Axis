@@ -201,14 +201,14 @@ if fixed_ratio:
         st.error("start_date와 end_date가 상위 코드에서 정의되지 않았습니다.")
         st.stop()
 
-    # 체크박스 (차트 하단)
-    st.markdown("---")
-    st.markdown("### 통화 데이터 비교")
+    # # 체크박스 (차트 하단)
+    # st.markdown("---")
+    # st.markdown("### 통화 데이터 비교")
     col_cb1, col_cb2 = st.columns(2)
     with col_cb1:
-        add_usd = st.checkbox("USD/BTC")
+        add_usd = st.checkbox("USD/BTC(달러)")
     with col_cb2:
-        add_krw = st.checkbox("KRW/BTC")
+        add_krw = st.checkbox("KRW/BTC(원화)")
 
     # 기준시점 수익률 비교 차트 생성
     ohlcv_data = {}
