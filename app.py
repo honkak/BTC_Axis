@@ -356,8 +356,8 @@ if fixed_ratio:
             plt.xticks(rotation=45)
             st.pyplot(fig)
 
-        except Exception as e:
-        st.error(f"서울아파트/BTC 데이터를 계산하는 중 오류가 발생했습니다: {e}")
+    except Exception as e:
+    st.error(f"서울아파트/BTC 데이터를 계산하는 중 오류가 발생했습니다: {e}")
 
     # 기준시점 수익률 비교 차트 생성
     ohlcv_data = {}
