@@ -342,14 +342,16 @@ if fixed_ratio:
             merged_df["BTC_KRW"].interpolate(method="linear", inplace=True)  # BTC 가격 보간
             merged_df["Seoul/BTC"] = merged_df["KRW"] / merged_df["BTC_KRW"]
 
-            # ohlcv_data에 추가
-            ohlcv_data["Seoul/BTC"] = merged_df.set_index("Date")["Seoul/BTC"]
+            # # ohlcv_data에 추가
+            # ohlcv_data["Seoul/BTC"] = merged_df.set_index("Date")["Seoul/BTC"]
             
         except Exception as e:
             st.error(f"서울아파트/BTC 데이터를 계산하는 중 오류가 발생했습니다: {e}")
 
     # 기준시점 수익률 비교 차트 생성
     ohlcv_data = {}
+    # ohlcv_data에 추가
+    ohlcv_data["Seoul/BTC"] = merged_df.set_index("Date")["Seoul/BTC"]
     if codes:
         for code in codes:
             try:
