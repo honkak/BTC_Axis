@@ -115,7 +115,7 @@ if show_btc_price_chart:
                 start_price = df.iloc[0]["close"]  # 시작 가격
                 end_price = df.iloc[-1]["close"]  # 종료 가격
                 # 종료일 문구 출력 (오늘로 고정되었음을 알림)
-                st.write(f"BTC Price (KRW) on {end_date}: {end_price:,.0f} KRW (오늘로 고정합니다)")
+                st.write(f"BTC Price (KRW) on {end_date}: {end_price:,.0f} KRW")
             else:
                 st.warning(f"No closing price data available for {end_date}.")
 
