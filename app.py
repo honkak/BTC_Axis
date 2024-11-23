@@ -263,6 +263,9 @@ if fixed_ratio:
         else:
             st.warning("조회할 수 있는 데이터가 없습니다.")
 
+import streamlit as st
+import pandas as pd
+
 # 주어진 코인 이름과 코인 코드
 coins = [
     ("비트코인", "BTC"), ("이더리움", "ETH"), ("리플", "XRP"), ("에이다", "ADA"),
@@ -289,9 +292,7 @@ coins = [
 ]
 
 # 6열 데이터프레임 구성
-columns = ["코인 이름 1", "코인 코드 1", "코인 이름 2", "코인 코드 2", "코인 이름 3", "코인 코드 3"]
 data = []
-
 for i in range(0, len(coins), 3):
     row = []
     for j in range(3):
@@ -301,7 +302,7 @@ for i in range(0, len(coins), 3):
             row.extend(["", ""])  # 빈칸 채우기
     data.append(row)
 
-df = pd.DataFrame(data, columns=columns)
+df = pd.DataFrame(data)
 
 # 스타일링 함수 정의
 def highlight_columns(x):
@@ -317,8 +318,8 @@ if st.button("코인 리스트 토글"):
     st.session_state.show_table = not st.session_state.show_table
 
 if st.session_state.show_table:
-    st.markdown("### 코인 리스트 (6열 구성)")
-    st.dataframe(df.style.apply(highlight_columns, axis=None), use_container_width=True)
+    st.markdown("### 코인 리스트")
+    st.table(df.style.apply(highlight_columns, axis=None).hide(axis='index'))
 
 ######################################
 
