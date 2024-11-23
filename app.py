@@ -4,7 +4,7 @@
 
 import streamlit as st
 import FinanceDataReader as fdr
-import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 import yfinance as yf
 import streamlit_analytics
