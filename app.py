@@ -174,7 +174,7 @@ st.markdown("---")
 
 #####################################
 # '비트코인 기준 자산흐름' 체크박스
-fixed_ratio = st.checkbox("비트코인 기준 자산흐름(Bitcoin Axis)_기준시점수익률")
+fixed_ratio = st.checkbox("비트코인 기준 자산흐름(Bitcoin Axis)")
 
 def fetch_full_ohlcv(exchange, symbol, timeframe, since, until):
     """업비트 API를 통해 전체 데이터를 가져오는 함수"""
