@@ -328,7 +328,26 @@ for i in range(0, len(coins), 3):
             row.extend(["", ""])  # 빈칸 채우기
     data.append(row)
 
-df = pd.DataFrame(data, columns=columns)
+df_coins = pd.DataFrame(data, columns=columns)
+
+# 주식/ETF 데이터 예시
+stocks = [
+    ("애플", "AAPL"), ("테슬라", "TSLA"), ("아마존", "AMZN"),
+    ("구글", "GOOGL"), ("마이크로소프트", "MSFT"), ("엔비디아", "NVDA")
+]
+columns_etf = ["종목명1", "종목코드1", "종목명2", "종목코드2", "종목명3", "종목코드3"]
+data_etf = []
+
+for i in range(0, len(stocks), 3):
+    row = []
+    for j in range(3):
+        if i + j < len(stocks):
+            row.extend(stocks[i + j])
+        else:
+            row.extend(["", ""])  # 빈칸 채우기
+    data_etf.append(row)
+
+df_etf = pd.DataFrame(data_etf, columns=columns_etf)
 
 # 스타일링 함수 정의
 def highlight_columns(x):
@@ -336,16 +355,32 @@ def highlight_columns(x):
     style.iloc[:, [0, 2, 4]] = "background-color: lightgrey;"  # 1, 3, 5열 회색
     return style
 
-# 버튼으로 테이블 표시
-if "show_table" not in st.session_state:
-    st.session_state.show_table = False
+# 상태 초기화
+if "show_coins" not in st.session_state:
+    st.session_state.show_coins = False
+if "show_etf" not in st.session_state:
+    st.session_state.show_etf = False
 
-if st.button("코인 리스트"):
-    st.session_state.show_table = not st.session_state.show_table
+# 버튼 배치
+col_button1, col_button2 = st.columns([1, 1])
+with col_button1:
+    if st.button("코인 리스트"):
+        st.session_state.show_coins = not st.session_state.show_coins
+        st.session_state.show_etf = False  # 다른 버튼 상태 초기화
+with col_button2:
+    if st.button("주식/ETF 리스트"):
+        st.session_state.show_etf = not st.session_state.show_etf
+        st.session_state.show_coins = False  # 다른 버튼 상태 초기화
 
-if st.session_state.show_table:
+# 데이터프레임 표시
+if st.session_state.show_coins:
     st.markdown("### 코인 리스트")
-    st.dataframe(df.style.apply(highlight_columns, axis=None), use_container_width=True)
+    st.dataframe(df_coins.style.apply(highlight_columns, axis=None), use_container_width=True)
+
+if st.session_state.show_etf:
+    st.markdown("### 주식/ETF 리스트")
+    st.dataframe(df_etf.style.apply(highlight_columns, axis=None), use_container_width=True)
+
 
 ######################################
 
