@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import requests
 import ccxt
 import matplotlib.ticker as ticker
+from matplotlib.ticker import ScalarFormatter
 
 # from matplotlib import font_manager
 
@@ -247,6 +248,11 @@ if fixed_ratio:
 
             for column in df_combined.columns:
                 ax.plot(df_combined.index, df_combined[column], label=column)
+
+            # 세로축 소수점 표시 설정
+            ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=False))
+            ax.yaxis.get_major_formatter().set_scientific(False)  # 과학적 표기 비활성화
+            ax.ticklabel_format(style='plain', axis='y')  # 숫자를 일반 형식으로 표시
 
             ax.set_title("Asset Performance Relative to BTC", fontsize=16)
             ax.set_xlabel("Date", fontsize=12)
