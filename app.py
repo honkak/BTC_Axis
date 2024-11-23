@@ -355,6 +355,7 @@ if fixed_ratio:
         for code in codes:
             try:
                 pair = f"{code}/BTC"
+                # since와 until을 정수로 전달
                 ohlcv = fetch_full_ohlcv(upbit, pair, "1d", int(start_datetime.timestamp() * 1000), int(end_datetime.timestamp() * 1000))
                 df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
                 df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
