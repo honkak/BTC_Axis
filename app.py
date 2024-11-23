@@ -173,6 +173,22 @@ if show_btc_price_chart:
 st.markdown("---")
 
 #####################################
+def fetch_full_ohlcv(exchange, symbol, timeframe, since, until):
+    """업비트 API를 통해 전체 데이터를 가져오는 함수"""
+    all_data = []
+    while since < until.timestamp() * 1000:
+        try:
+            ohlcv = exchange.fetch_ohlcv(symbol, timeframe, since, limit=200)  # 최대 200개
+            if not ohlcv:
+                break
+            all_data.extend(ohlcv)
+            since = ohlcv[-1][0] + 1  # 마지막 데이터의 타임스탬프를 기준으로 다음 데이터 요청
+        except Exception as e:
+            st.warning(f"{symbol} 데이터를 가져오는 중 문제가 발생했습니다: {e}")
+            break
+    return all_data
+
+
 # '비트코인 기준 자산흐름' 체크박스
 fixed_ratio = st.checkbox("비트코인 기준 자산흐름(Bitcoin Axis)_기준시점수익률")
 
@@ -200,7 +216,7 @@ if fixed_ratio:
     except NameError:
         st.error("start_date와 end_date가 상위 코드에서 정의되지 않았습니다.")
         st.stop()
-        
+
     col_cb1, col_cb2 = st.columns(2)
     with col_cb1:
         add_usd = st.checkbox("USD/BTC(달러)")
@@ -213,31 +229,28 @@ if fixed_ratio:
         for code in codes:
             try:
                 pair = f"{code}/BTC"
-                ohlcv = upbit.fetch_ohlcv(pair, timeframe="1d", since=int(start_datetime.timestamp() * 1000))
+                # 전체 데이터 가져오기
+                ohlcv = fetch_full_ohlcv(upbit, pair, "1d", int(start_datetime.timestamp() * 1000), end_datetime)
                 df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
                 df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
                 df.set_index("Date", inplace=True)
-                
-                # 디버깅용 로그
-                st.write(f"{code}/BTC 데이터프레임 확인:", df.tail())
-                
-                # 데이터 필터링
+
+                # 디버깅: 데이터프레임 범위 확인
+                st.write(f"{code}/BTC 데이터프레임:", df)
+
+                # 기간 필터링
                 df = df.loc[start_datetime:end_datetime]
                 ohlcv_data[f"{code}/BTC"] = df["close"]
             except Exception as e:
                 st.warning(f"{code} 데이터를 가져오는 중 문제가 발생했습니다: {e}")
 
-    # 체크박스에 따른 데이터 추가 처리
+    # USD/BTC와 KRW/BTC 추가
     if add_usd:
         try:
-            btc_usdt = upbit.fetch_ohlcv("BTC/USDT", timeframe="1d", since=int(start_datetime.timestamp() * 1000))
-            df = pd.DataFrame(btc_usdt, columns=["timestamp", "open", "high", "low", "close", "volume"])
+            ohlcv = fetch_full_ohlcv(upbit, "BTC/USDT", "1d", int(start_datetime.timestamp() * 1000), end_datetime)
+            df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
             df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
             df.set_index("Date", inplace=True)
-            
-            # 디버깅용 로그
-            st.write("USD/BTC 데이터프레임 확인:", df.tail())
-            
             df = df.loc[start_datetime:end_datetime]
             ohlcv_data["USD/BTC"] = 1 / df["close"]
         except Exception as e:
@@ -245,14 +258,10 @@ if fixed_ratio:
 
     if add_krw:
         try:
-            btc_krw = upbit.fetch_ohlcv("BTC/KRW", timeframe="1d", since=int(start_datetime.timestamp() * 1000))
-            df = pd.DataFrame(btc_krw, columns=["timestamp", "open", "high", "low", "close", "volume"])
+            ohlcv = fetch_full_ohlcv(upbit, "BTC/KRW", "1d", int(start_datetime.timestamp() * 1000), end_datetime)
+            df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
             df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
             df.set_index("Date", inplace=True)
-            
-            # 디버깅용 로그
-            st.write("KRW/BTC 데이터프레임 확인:", df.tail())
-            
             df = df.loc[start_datetime:end_datetime]
             ohlcv_data["KRW/BTC"] = 1 / df["close"]
         except Exception as e:
@@ -277,6 +286,8 @@ if fixed_ratio:
         st.pyplot(fig)
     else:
         st.warning("조회할 수 있는 데이터가 없습니다.")
+
+
 # 주어진 코인 이름과 코인 코드
 coins = [
     ("이더리움", "ETH"), ("리플", "XRP"), ("에이다", "ADA"),
