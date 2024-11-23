@@ -176,6 +176,9 @@ st.markdown("---")
 # '비트코인 기준 자산흐름' 체크박스
 fixed_ratio = st.checkbox("비트코인 기준 자산흐름(Bitcoin Axis)_기준시점수익률")
 
+# 초기값 설정
+add_apartment = False
+
 if fixed_ratio:
     # 업비트 서비스 시작일
     upbit_start_date = datetime.date(2017, 10, 24)
@@ -189,19 +192,14 @@ if fixed_ratio:
     start_datetime = datetime.datetime.combine(start_date, datetime.datetime.min.time())
     end_datetime = datetime.datetime.combine(end_date, datetime.datetime.max.time())
 
-    # 서울아파트 지수 데이터 (중복 제거)
-    seoul_index_data = [
-        {"Date": "2017-10-24", "Index": 63.96632508},
-        {"Date": "2024-06-03", "Index": 90.18959413},
-        {"Date": "2024-07-01", "Index": 90.48698013},
-        {"Date": "2024-08-05", "Index": 91.31906652},
-        {"Date": "2024-09-02", "Index": 92.20839652},
-        {"Date": "2024-10-07", "Index": 92.7004616},
-        {"Date": "2024-11-04", "Index": 93.02716714}
-    ]
-    seoul_df = pd.DataFrame(seoul_index_data)
-    seoul_df["Date"] = pd.to_datetime(seoul_df["Date"])
-    seoul_df["KRW"] = seoul_df["Index"] * 10_000_000  # 원화로 변환
+    # 서울아파트/BTC 체크박스 정의
+    col_cb1, col_cb2, col_cb3 = st.columns(3)
+    with col_cb1:
+        add_usd = st.checkbox("USD/BTC(달러)")
+    with col_cb2:
+        add_krw = st.checkbox("KRW/BTC(원화)")
+    with col_cb3:
+        add_apartment = st.checkbox("서울아파트/BTC")
 
     # 데이터 저장 딕셔너리 초기화
     ohlcv_data = {}
@@ -209,6 +207,20 @@ if fixed_ratio:
     # 서울아파트/BTC 계산 추가
     if add_apartment:
         try:
+            # 서울아파트 지수 데이터
+            seoul_index_data = [
+                {"Date": "2017-10-24", "Index": 63.96632508},
+                {"Date": "2024-06-03", "Index": 90.18959413},
+                {"Date": "2024-07-01", "Index": 90.48698013},
+                {"Date": "2024-08-05", "Index": 91.31906652},
+                {"Date": "2024-09-02", "Index": 92.20839652},
+                {"Date": "2024-10-07", "Index": 92.7004616},
+                {"Date": "2024-11-04", "Index": 93.02716714}
+            ]
+            seoul_df = pd.DataFrame(seoul_index_data)
+            seoul_df["Date"] = pd.to_datetime(seoul_df["Date"])
+            seoul_df["KRW"] = seoul_df["Index"] * 10_000_000  # 원화로 변환
+
             # BTC 가격 데이터 가져오기
             btc_ohlcv = fetch_full_ohlcv(upbit, "BTC/KRW", "1d", int(start_datetime.timestamp() * 1000), int(end_datetime.timestamp() * 1000))
             btc_df = pd.DataFrame(btc_ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
