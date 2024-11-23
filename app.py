@@ -174,7 +174,7 @@ st.markdown("---")
 
 #####################################
 # '비트코인 기준 자산흐름' 체크박스
-fixed_ratio = st.checkbox("비트코인 기준 자산흐름(Bitcoin Axis)")
+fixed_ratio = st.checkbox("BTC 기준 자산흐름(Bitcoin Axis)")
 
 def fetch_full_ohlcv(exchange, symbol, timeframe, since, until):
     """업비트 API를 통해 전체 데이터를 가져오는 함수"""
@@ -394,7 +394,7 @@ st.markdown("---")
 #시가총액 비율 기능
 
 # 'BTC 시가총액 비율' 체크박스
-show_market_cap_chart = st.checkbox("BTC 시가총액 비율")
+show_market_cap_chart = st.checkbox("Bitcoin 시가총액 비율")
 
 if show_market_cap_chart:
     cg = CoinGeckoAPI()
@@ -419,7 +419,7 @@ if show_market_cap_chart:
         sizes = [coin['market_cap'] for coin in top_5_coins] + [others_market_cap]
 
         # Bitcoin 색상 및 다른 조각 색상 설정
-        pie_colors = ['#1f77b4'] + ['#66b3ff', '#99ff99', '#ffcc99', '#c2c2f0', '#ffb3e6']
+        pie_colors = ['#4a90d6'] + ['#66b3ff', '#99ff99', '#ffcc99', '#c2c2f0', '#ffb3e6']
 
         # 모든 조각을 5%씩 분리
         explode = [0.05 for _ in labels]
