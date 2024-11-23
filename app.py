@@ -376,11 +376,11 @@ with col_button2:
 
 # 데이터프레임 표시
 if st.session_state.show_coins:
-    st.markdown("### 코인 리스트")
+    # st.markdown("### 코인 리스트")
     st.dataframe(df_coins.style.apply(highlight_columns, axis=None), use_container_width=True)
 
 if st.session_state.show_etf:
-    st.markdown("### 주식/ETF 리스트")
+    # st.markdown("### 주식/ETF 리스트")
     st.dataframe(df_etf.style.apply(highlight_columns, axis=None), use_container_width=True)
 
 
