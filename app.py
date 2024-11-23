@@ -71,6 +71,14 @@ if show_btc_price_chart:
             start_date = upbit_start_date
             st.warning("업비트 가격을 가져오므로 조회 시작일을 2017년 10월 24일 서비스 개시일로 자동 변경합니다.")
 
+        # 현재 날짜 가져오기
+        today = datetime.date.today()
+
+        # 조회 종료일이 미래인 경우 현재 날짜로 변경
+        if end_date > today:
+            st.warning("조회 종료일이 미래 날짜이므로 종료일을 오늘로 설정합니다.")
+            end_date = today
+
         # 데이터 조회를 위한 타임스탬프 변환
         since = int(datetime.datetime.combine(start_date, datetime.datetime.min.time()).timestamp() * 1000)
         end_timestamp = int(datetime.datetime.combine(end_date, datetime.datetime.max.time()).timestamp() * 1000)
@@ -106,7 +114,8 @@ if show_btc_price_chart:
             if not df.empty:
                 start_price = df.iloc[0]["close"]  # 시작 가격
                 end_price = df.iloc[-1]["close"]  # 종료 가격
-                st.write(f"BTC Price (KRW) on {end_date}: {end_price:,.0f} KRW")
+                # 종료일 문구 출력 (오늘로 고정되었음을 알림)
+                st.write(f"BTC Price (KRW) on {end_date}: {end_price:,.0f} KRW (오늘로 고정합니다)")
             else:
                 st.warning(f"No closing price data available for {end_date}.")
 
@@ -147,6 +156,7 @@ if show_btc_price_chart:
 
     except Exception as e:
         st.error(f"비트코인 데이터를 가져오는 중 오류가 발생했습니다: {e}")
+
 
 
 ######################################
