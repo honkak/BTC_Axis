@@ -176,16 +176,17 @@ st.markdown("---")
 # '비트코인 기준 자산흐름' 체크박스
 fixed_ratio = st.checkbox("비트코인 기준 자산흐름(Bitcoin Axis)_기준시점수익률")
 
+# 업비트 전체 데이터를 가져오는 함수
 def fetch_full_ohlcv(exchange, symbol, timeframe, since, until):
     """업비트 API를 통해 전체 데이터를 가져오는 함수"""
     all_data = []
     while since < until.timestamp() * 1000:
         try:
-            ohlcv = exchange.fetch_ohlcv(symbol, timeframe, since, limit=200)  # 최대 200개
+            ohlcv = exchange.fetch_ohlcv(symbol, timeframe, since, limit=200)
             if not ohlcv:
                 break
             all_data.extend(ohlcv)
-            since = ohlcv[-1][0] + 1  # 마지막 데이터의 타임스탬프를 기준으로 다음 데이터 요청
+            since = ohlcv[-1][0] + 1
         except Exception as e:
             st.warning(f"{symbol} 데이터를 가져오는 중 문제가 발생했습니다: {e}")
             break
@@ -216,6 +217,28 @@ if fixed_ratio:
         st.error("start_date와 end_date가 상위 코드에서 정의되지 않았습니다.")
         st.stop()
 
+    # BTC/USD와 BTC/KRW 데이터 가져오기
+    try:
+        btc_usd = fetch_full_ohlcv(upbit, "BTC/USDT", "1d", int(start_datetime.timestamp() * 1000), end_datetime)
+        btc_usd_df = pd.DataFrame(btc_usd, columns=["timestamp", "open", "high", "low", "close", "volume"])
+        btc_usd_df["Date"] = pd.to_datetime(btc_usd_df["timestamp"], unit="ms")
+        btc_usd_df.set_index("Date", inplace=True)
+        btc_usd_df = btc_usd_df.loc[start_datetime:end_datetime]["close"]
+    except Exception as e:
+        st.warning(f"BTC/USD 데이터를 가져오는 중 문제가 발생했습니다: {e}")
+        btc_usd_df = None
+
+    try:
+        btc_krw = fetch_full_ohlcv(upbit, "BTC/KRW", "1d", int(start_datetime.timestamp() * 1000), end_datetime)
+        btc_krw_df = pd.DataFrame(btc_krw, columns=["timestamp", "open", "high", "low", "close", "volume"])
+        btc_krw_df["Date"] = pd.to_datetime(btc_krw_df["timestamp"], unit="ms")
+        btc_krw_df.set_index("Date", inplace=True)
+        btc_krw_df = btc_krw_df.loc[start_datetime:end_datetime]["close"]
+    except Exception as e:
+        st.warning(f"BTC/KRW 데이터를 가져오는 중 문제가 발생했습니다: {e}")
+        btc_krw_df = None
+
+    # 체크박스 추가
     col_cb1, col_cb2, col_cb3 = st.columns(3)
     with col_cb1:
         add_usd = st.checkbox("USD/BTC(달러)")
@@ -224,24 +247,6 @@ if fixed_ratio:
     with col_cb3:
         add_apartment = st.checkbox("서울아파트/BTC")
 
-    # # 기준시점 수익률 비교 차트 생성
-    # ohlcv_data = {}
-    # if codes:
-    #     for code in codes:
-    #         try:
-    #             pair = f"{code}/BTC"
-    #             # 전체 데이터 가져오기
-    #             ohlcv = fetch_full_ohlcv(upbit, pair, "1d", int(start_datetime.timestamp() * 1000), end_datetime)
-    #             df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
-    #             df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
-    #             df.set_index("Date", inplace=True)
-
-    #             # 기간 필터링
-    #             df = df.loc[start_datetime:end_datetime]
-    #             ohlcv_data[f"{code}/BTC"] = df["close"]
-    #         except Exception as e:
-    #             st.warning(f"{code} 데이터를 가져오는 중 문제가 발생했습니다: {e}")
-
     # 기준시점 수익률 비교 차트 생성
     ohlcv_data = {}
     for code in codes:
@@ -249,16 +254,16 @@ if fixed_ratio:
             # FinanceDataReader로 주식/ETF 가격 조회
             data = fdr.DataReader(code, start_date, end_date)
             if not data.empty:
-                if code.isdigit():  # 한국 주식
-                    if btc_krw_df is not None:
-                        data["BTC_PRICE"] = btc_krw_df.reindex(data.index, method="ffill")
-                        data["Price/BTC"] = data["Close"] / data["BTC_PRICE"]  # KRW 기준 가격을 BTC로 변환
-                        ohlcv_data[f"{code}/BTC"] = data["Price/BTC"]
-                else:  # 미국 주식 또는 ETF
-                    if btc_usd_df is not None:
-                        data["BTC_PRICE"] = btc_usd_df.reindex(data.index, method="ffill")
-                        data["Price/BTC"] = data["Close"] / data["BTC_PRICE"]  # USD 기준 가격을 BTC로 변환
-                        ohlcv_data[f"{code}/BTC"] = data["Price/BTC"]
+                if code.isdigit() and btc_krw_df is not None:  # 한국 주식
+                    data["BTC_PRICE"] = btc_krw_df.reindex(data.index, method="ffill")
+                    data["Price/BTC"] = data["Close"] / data["BTC_PRICE"]
+                    ohlcv_data[f"{code}/BTC"] = data["Price/BTC"]
+                elif not code.isdigit() and btc_usd_df is not None:  # 미국 주식/ETF
+                    data["BTC_PRICE"] = btc_usd_df.reindex(data.index, method="ffill")
+                    data["Price/BTC"] = data["Close"] / data["BTC_PRICE"]
+                    ohlcv_data[f"{code}/BTC"] = data["Price/BTC"]
+                else:
+                    st.warning(f"{code} 데이터를 처리하는 중 문제가 발생했습니다.")
             else:  # 업비트에서 조회 가능한 코인 처리
                 pair = f"{code}/BTC"
                 ohlcv = fetch_full_ohlcv(upbit, pair, "1d", int(start_datetime.timestamp() * 1000), end_datetime)
@@ -314,7 +319,6 @@ if fixed_ratio:
         st.pyplot(fig)
     else:
         st.warning("조회할 수 있는 데이터가 없습니다.")
-
 
 # 주어진 코인 이름과 코인 코드
 coins = [
