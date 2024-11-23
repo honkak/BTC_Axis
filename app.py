@@ -332,17 +332,33 @@ if fixed_ratio:
             seoul_df["Date"] = pd.to_datetime(seoul_df["Date"])
             seoul_df["KRW"] = seoul_df["Index"] * 10_000_000  # 원화로 변환
 
+            # 전체 날짜 범위 생성
+            all_dates = pd.date_range(start=start_datetime, end=end_datetime, freq="D")
+            seoul_df = seoul_df.set_index("Date").reindex(all_dates).reset_index()
+            seoul_df.rename(columns={"index": "Date"}, inplace=True)
+    
+            # 보간으로 빈 값 채우기
+            seoul_df["KRW"].interpolate(method="linear", inplace=True)
+
             # BTC 가격 데이터 가져오기
             btc_ohlcv = fetch_full_ohlcv(upbit, "BTC/KRW", "1d", int(start_datetime.timestamp() * 1000), end_datetime)
             btc_df = pd.DataFrame(btc_ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
             btc_df["Date"] = pd.to_datetime(btc_df["timestamp"], unit="ms")
             btc_df = btc_df[["Date", "close"]].rename(columns={"close": "BTC_KRW"})
 
+            # 전체 날짜 범위 생성 및 보간
+            btc_df = btc_df.set_index("Date").reindex(all_dates).reset_index()
+            btc_df["BTC_KRW"].interpolate(method="linear", inplace=True)
+
+            # # 데이터 병합
+            # merged_df = pd.merge(seoul_df, btc_df, on="Date", how="outer")
+            # merged_df = merged_df.sort_values("Date")
+            # merged_df["KRW"].interpolate(method="linear", inplace=True)  # 서울아파트 지수 보간
+            # merged_df["BTC_KRW"].interpolate(method="linear", inplace=True)  # BTC 가격 보간
+            # merged_df["Seoul/BTC"] = merged_df["KRW"] / merged_df["BTC_KRW"]
+
             # 데이터 병합
             merged_df = pd.merge(seoul_df, btc_df, on="Date", how="outer")
-            merged_df = merged_df.sort_values("Date")
-            merged_df["KRW"].interpolate(method="linear", inplace=True)  # 서울아파트 지수 보간
-            merged_df["BTC_KRW"].interpolate(method="linear", inplace=True)  # BTC 가격 보간
             merged_df["Seoul/BTC"] = merged_df["KRW"] / merged_df["BTC_KRW"]
 
             # 서울아파트 데이터 저장
