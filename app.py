@@ -13,7 +13,6 @@ import matplotlib.pyplot as plt
 import requests
 import ccxt
 import matplotlib.ticker as ticker
-from matplotlib.ticker import ScalarFormatter
 
 # from matplotlib import font_manager
 
@@ -181,11 +180,11 @@ if fixed_ratio:
     # 종목 코드 입력 필드
     col_code1, col_code2, col_code3 = st.columns(3)
     with col_code1:
-        code1 = st.text_input('종목코드 1', value='', placeholder='종목코드를 입력하세요 - (예시)ETH')
+        code1 = st.text_input('종목코드 1', value='', placeholder='코드입력 - (예시)ETH')
     with col_code2:
-        code2 = st.text_input('종목코드 2', value='', placeholder='종목코드를 입력하세요 - (예시)SOL')
+        code2 = st.text_input('종목코드 2', value='', placeholder='코드입력 - (예시)SOL')
     with col_code3:
-        code3 = st.text_input('종목코드 3', value='', placeholder='종목코드를 입력하세요 - (예시)USDT')
+        code3 = st.text_input('종목코드 3', value='', placeholder='코드입력 - (예시)USDT')
 
     # 업비트 모듈 초기화
     upbit = ccxt.upbit()
@@ -202,6 +201,15 @@ if fixed_ratio:
         st.error("start_date와 end_date가 상위 코드에서 정의되지 않았습니다.")
         st.stop()
 
+    # 체크박스 (차트 하단)
+    st.markdown("---")
+    st.markdown("### 통화 데이터 비교")
+    col_cb1, col_cb2 = st.columns(2)
+    with col_cb1:
+        add_usd = st.checkbox("USD/BTC")
+    with col_cb2:
+        add_krw = st.checkbox("KRW/BTC")
+
     # 기준시점 수익률 비교 차트 생성
     ohlcv_data = {}
     if codes:
@@ -216,40 +224,6 @@ if fixed_ratio:
                 ohlcv_data[f"{code}/BTC"] = df["close"]
             except Exception as e:
                 st.warning(f"{code} 데이터를 가져오는 중 문제가 발생했습니다: {e}")
-
-    # 차트 생성
-    if ohlcv_data:
-        df_combined = pd.DataFrame(ohlcv_data)
-        df_combined = df_combined / df_combined.iloc[0] * 100 - 100  # % 변화율
-
-        fig, ax = plt.subplots(figsize=(12, 6))
-        ax.set_ylabel("Percentage Change (%)", fontsize=12)
-
-        for column in df_combined.columns:
-            ax.plot(df_combined.index, df_combined[column], label=column)
-
-        # 세로축 소수점 표시 설정
-        ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=False))
-        ax.yaxis.get_major_formatter().set_scientific(False)  # 과학적 표기 비활성화
-        ax.ticklabel_format(style='plain', axis='y')  # 숫자를 일반 형식으로 표시
-
-        ax.set_title("Asset Performance Relative to BTC", fontsize=16)
-        ax.set_xlabel("Date", fontsize=12)
-        ax.legend()
-        ax.grid(True)
-        plt.xticks(rotation=45)
-        st.pyplot(fig)
-    else:
-        st.warning("조회할 수 있는 데이터가 없습니다.")
-
-    # 체크박스 (차트 하단)
-    st.markdown("---")
-    st.markdown("### 추가 데이터 비교")
-    col_cb1, col_cb2 = st.columns(2)
-    with col_cb1:
-        add_usd = st.checkbox("USD/BTC")
-    with col_cb2:
-        add_krw = st.checkbox("KRW/BTC")
 
     # 체크박스에 따른 데이터 추가 처리
     if add_usd:
@@ -274,29 +248,25 @@ if fixed_ratio:
         except Exception as e:
             st.warning("KRW/BTC 데이터를 가져오는 중 문제가 발생했습니다: {e}")
 
-    # 추가된 데이터를 다시 차트에 반영
-    if add_usd or add_krw:
-        if ohlcv_data:
-            df_combined = pd.DataFrame(ohlcv_data)
-            df_combined = df_combined / df_combined.iloc[0] * 100 - 100  # % 변화율
+    # 최종 차트 생성
+    if ohlcv_data:
+        df_combined = pd.DataFrame(ohlcv_data)
+        df_combined = df_combined / df_combined.iloc[0] * 100 - 100  # % 변화율
 
-            fig, ax = plt.subplots(figsize=(12, 6))
-            ax.set_ylabel("Percentage Change (%)", fontsize=12)
+        fig, ax = plt.subplots(figsize=(12, 6))
+        ax.set_ylabel("Percentage Change (%)", fontsize=12)
 
-            for column in df_combined.columns:
-                ax.plot(df_combined.index, df_combined[column], label=column)
+        for column in df_combined.columns:
+            ax.plot(df_combined.index, df_combined[column], label=column)
 
-            # 세로축 소수점 표시 설정
-            ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=False))
-            ax.yaxis.get_major_formatter().set_scientific(False)  # 과학적 표기 비활성화
-            ax.ticklabel_format(style='plain', axis='y')  # 숫자를 일반 형식으로 표시
-
-            ax.set_title("Asset Performance Relative to BTC", fontsize=16)
-            ax.set_xlabel("Date", fontsize=12)
-            ax.legend()
-            ax.grid(True)
-            plt.xticks(rotation=45)
-            st.pyplot(fig)
+        ax.set_title("Asset Performance Relative to BTC", fontsize=16)
+        ax.set_xlabel("Date", fontsize=12)
+        ax.legend()
+        ax.grid(True)
+        plt.xticks(rotation=45)
+        st.pyplot(fig)
+    else:
+        st.warning("조회할 수 있는 데이터가 없습니다.")
 
 # 주어진 코인 이름과 코인 코드
 coins = [
