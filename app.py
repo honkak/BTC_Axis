@@ -216,11 +216,13 @@ if fixed_ratio:
         st.error("start_date와 end_date가 상위 코드에서 정의되지 않았습니다.")
         st.stop()
 
-    col_cb1, col_cb2 = st.columns(2)
+    col_cb1, col_cb2, col_cb3 = st.columns(3)
     with col_cb1:
         add_usd = st.checkbox("USD/BTC(달러)")
     with col_cb2:
         add_krw = st.checkbox("KRW/BTC(원화)")
+    with col_cb3:
+        add_apartment = st.checkbox("서울아파트/BTC")
 
     # 기준시점 수익률 비교 차트 생성
     ohlcv_data = {}
