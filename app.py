@@ -190,6 +190,20 @@ if fixed_ratio:
     if start_date < upbit_start_date:
         start_date = upbit_start_date
         st.warning("업비트 가격을 가져오므로 조회 시작일을 2017년 10월 24일 서비스 개시일로 자동 변경합니다.")
+def fetch_full_ohlcv(exchange, symbol, timeframe, since, until):
+    """업비트 API를 통해 전체 데이터를 가져오는 함수"""
+    all_data = []
+    while since < until.timestamp() * 1000:
+        try:
+            ohlcv = exchange.fetch_ohlcv(symbol, timeframe, since, limit=200)  # 최대 200개
+            if not ohlcv:
+                break
+            all_data.extend(ohlcv)
+            since = ohlcv[-1][0] + 1  # 마지막 데이터의 타임스탬프를 기준으로 다음 데이터 요청
+        except Exception as e:
+            st.warning(f"{symbol} 데이터를 가져오는 중 문제가 발생했습니다: {e}")
+            break
+    return all_data
 
     # 날짜 변환 (datetime.date → datetime.datetime)
     start_datetime = datetime.datetime.combine(start_date, datetime.datetime.min.time())
