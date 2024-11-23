@@ -263,6 +263,23 @@ if fixed_ratio:
         else:
             st.warning("조회할 수 있는 데이터가 없습니다.")
 
+# CoinGecko API 객체 생성
+cg = CoinGeckoAPI()
+
+# 시가총액 상위 10개 코인 데이터 가져오기
+top_coins = cg.get_coins_markets(vs_currency='usd', order='market_cap_desc', per_page=10, page=1)
+
+# 코인 리스트 생성
+coin_names = [coin['name'] for coin in top_coins]
+coin_symbols = [coin['symbol'].upper() for coin in top_coins]
+coin_prices = {coin['symbol'].upper(): coin['current_price'] for coin in top_coins}
+
+st.title("Top 10 Cryptocurrencies by Market Cap")
+
+# 각 코인에 대한 버튼 생성
+for coin_name, coin_symbol in zip(coin_names, coin_symbols):
+    if st.button(f"{coin_name} ({coin_symbol})"):
+        st.info(f"{coin_name} ({coin_symbol})의 현재 가격은 ${coin_prices[coin_symbol]:,.2f}입니다.")
 
 ######################################
 
