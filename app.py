@@ -367,6 +367,8 @@ if fixed_ratio:
             st.write("보간된 서울아파트 데이터", seoul_df)
             st.write("보간된 BTC 데이터", btc_df)
             
+        except KeyError as e:
+            st.error(f"데이터프레임 처리 중 KeyError가 발생했습니다: {e}")
         except Exception as e:
             st.error(f"서울아파트/BTC 데이터를 계산하는 중 오류가 발생했습니다: {e}")
 
