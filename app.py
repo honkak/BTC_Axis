@@ -683,5 +683,36 @@ if show_kimchi_premium:
 
 #############################
 
+# 수평선 추가
+st.markdown("---")
 
+#####################################
+
+# 'USDT 1달러 추종 확인' 체크박스 추가
+show_usdt_chart = st.checkbox("USDT 1달러 추종 확인")
+
+if show_usdt_chart:
+    try:
+        # 데이터 가져오기
+        prices = fetch_usdt_prices()
+        df = pd.DataFrame(prices, columns=["timestamp", "price"])
+        df["date"] = pd.to_datetime(df["timestamp"], unit="ms")
+        df = df[["date", "price"]]
+
+        # 차트 생성
+        st.write("지난 100일 동안의 USDT 가격 변화")
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.plot(df["date"], df["price"], label="USDT/USD Price")
+        ax.axhline(y=1.0, color="red", linestyle="--", label="Target Price ($1)")
+        ax.set_title("USDT/USD Price Over 100 Days")
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Price (USD)")
+        ax.legend()
+        ax.grid()
+
+        # Streamlit에 차트 표시
+        st.pyplot(fig)
+
+    except Exception as e:
+        st.error(f"데이터를 가져오는 중 오류가 발생했습니다: {e}")
 
