@@ -769,7 +769,7 @@ def fetch_krw_usd_historical():
     response = requests.get(url)
     response.raise_for_status()
     data = response.json()
-    return [{"date": datetime.utcnow() - pd.Timedelta(days=i), "price": data["rates"]["KRW"]} for i in range(100)]
+    return [{"date": datetime.datetime() - pd.Timedelta(days=i), "price": data["rates"]["KRW"]} for i in range(100)]
 
 
 if show_usdt_chart:
