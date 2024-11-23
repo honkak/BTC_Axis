@@ -177,15 +177,26 @@ st.markdown("---")
 # '비트코인 기준 자산흐름' 체크박스
 fixed_ratio = st.checkbox("비트코인 기준 자산흐름(Bitcoin Axis)_기준시점수익률")
 
+# '비트코인 기준 자산흐름' 체크박스
+fixed_ratio = st.checkbox("비트코인 기준 자산흐름(Bitcoin Axis)")
+
 if fixed_ratio:
-    # 종목 코드 입력 필드
-    col_code1, col_code2, col_code3 = st.columns(3)
+    # 종목 코드 입력 필드와 체크박스 배치
+    col_code1, col_code2, col_code3, col_cb1, col_cb2, col_cb3 = st.columns([2, 2, 2, 1, 1, 1])
     with col_code1:
-        code1 = st.text_input('종목코드 1', value='', placeholder='코드입력 - (예시)ETH')
+        code1 = st.text_input('종목코드 1', value='', placeholder='종목코드를 입력하세요 - (예시)ETH')
     with col_code2:
-        code2 = st.text_input('종목코드 2', value='', placeholder='코드입력 - (예시)SOL')
+        code2 = st.text_input('종목코드 2', value='', placeholder='종목코드를 입력하세요 - (예시)SOL')
     with col_code3:
-        code3 = st.text_input('종목코드 3', value='', placeholder='코드입력 - (예시)USDT')
+        code3 = st.text_input('종목코드 3', value='', placeholder='종목코드를 입력하세요 - (예시)USDT')
+
+    # 오른쪽 체크박스
+    with col_cb1:
+        add_spy = st.checkbox("SPY/BTC")
+    with col_cb2:
+        add_usd = st.checkbox("USD/BTC")
+    with col_cb3:
+        add_krw = st.checkbox("KRW/BTC")
 
     # 업비트 모듈 초기화
     upbit = ccxt.upbit()
@@ -194,23 +205,45 @@ if fixed_ratio:
     codes = [code1.strip().upper(), code2.strip().upper(), code3.strip().upper()]
     codes = [code for code in codes if code]  # 빈 코드 제거
 
-    # 날짜 변환 (datetime.date -> datetime.datetime)
-    start_datetime = datetime.datetime.combine(start_date, datetime.datetime.min.time())
-    end_datetime = datetime.datetime.combine(end_date, datetime.datetime.max.time())
+    # 체크박스에 따른 추가 데이터 처리
+    if add_usd:
+        codes.append("USD/BTC")
+    if add_krw:
+        codes.append("KRW/BTC")
+    if add_spy:
+        codes.append("SPY/BTC")  # 현재 SPY는 데이터 로직 미구현
 
     if codes:
         ohlcv_data = {}
         for code in codes:
             try:
-                pair = f"{code}/BTC"
-                ohlcv = upbit.fetch_ohlcv(pair, timeframe="1d", since=int(start_datetime.timestamp() * 1000))
-                df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
-                df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
-                df.set_index("Date", inplace=True)
-                df = df.loc[start_datetime:end_datetime]
-                ohlcv_data[f"{code}/BTC"] = df["close"]
+                if code == "USD/BTC":
+                    # BTC/USDT 데이터를 역수로 변환
+                    btc_usdt = upbit.fetch_ohlcv("BTC/USDT", timeframe="1d", since=int(start_datetime.timestamp() * 1000))
+                    df = pd.DataFrame(btc_usdt, columns=["timestamp", "open", "high", "low", "close", "volume"])
+                    df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
+                    df.set_index("Date", inplace=True)
+                    df = df.loc[start_datetime:end_datetime]
+                    ohlcv_data["USD/BTC"] = 1 / df["close"]
+                elif code == "KRW/BTC":
+                    # BTC/KRW 데이터를 역수로 변환
+                    btc_krw = upbit.fetch_ohlcv("BTC/KRW", timeframe="1d", since=int(start_datetime.timestamp() * 1000))
+                    df = pd.DataFrame(btc_krw, columns=["timestamp", "open", "high", "low", "close", "volume"])
+                    df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
+                    df.set_index("Date", inplace=True)
+                    df = df.loc[start_datetime:end_datetime]
+                    ohlcv_data["KRW/BTC"] = 1 / df["close"]
+                else:
+                    # 일반 가상자산/BTC 데이터 가져오기
+                    pair = f"{code}/BTC"
+                    ohlcv = upbit.fetch_ohlcv(pair, timeframe="1d", since=int(start_datetime.timestamp() * 1000))
+                    df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
+                    df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
+                    df.set_index("Date", inplace=True)
+                    df = df.loc[start_datetime:end_datetime]
+                    ohlcv_data[f"{code}/BTC"] = df["close"]
             except Exception as e:
-                st.warning(f"{code}/BTC 데이터를 가져오는 중 문제가 발생했습니다: {e}")
+                st.warning(f"{code} 데이터를 가져오는 중 문제가 발생했습니다: {e}")
 
         # 기준시점 수익률 비교 차트 생성
         if ohlcv_data:
