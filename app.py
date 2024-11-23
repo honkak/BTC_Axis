@@ -437,7 +437,7 @@ if show_market_cap_chart:
         # 데이터 검증 및 출력
         st.write(f"Global Market Cap (USD): {int(global_market_cap):,} USD")
         st.write(f"Bitcoin Market Cap (USD): {int(btc_market_cap):,} USD")
-        st.write(f"Bitcoin Dominance: {btc_dominance:.2f}%")
+        st.write(f"Bitcoin Dominance: {btc_dominance:.2f}(%)")
 
         # 파이 차트 생성
         fig, ax = plt.subplots(figsize=(8, 6))
