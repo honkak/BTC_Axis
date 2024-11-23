@@ -176,6 +176,15 @@ st.markdown("---")
 # '비트코인 기준 자산흐름' 체크박스
 fixed_ratio = st.checkbox("비트코인 기준 자산흐름(Bitcoin Axis)_기준시점수익률")
 
+if fixed_ratio:
+    # 업비트 서비스 시작일
+    upbit_start_date = datetime.date(2017, 10, 24)
+
+    # 조회 시작일이 업비트 서비스 시작일 이전이면 자동으로 변경
+    if start_date < upbit_start_date:
+        start_date = upbit_start_date
+        st.warning("업비트 가격을 가져오므로 조회 시작일을 2017년 10월 24일 서비스 개시일로 자동 변경합니다.")
+
 def fetch_full_ohlcv(exchange, symbol, timeframe, since, until):
     """업비트 API를 통해 전체 데이터를 가져오는 함수"""
     all_data = []
