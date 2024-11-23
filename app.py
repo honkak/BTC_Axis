@@ -176,11 +176,19 @@ st.markdown("---")
 # '비트코인 기준 자산흐름' 체크박스
 fixed_ratio = st.checkbox("비트코인 기준 자산흐름(Bitcoin Axis)_기준시점수익률")
 
-# fetch_full_ohlcv 함수 정의
+if fixed_ratio:
+    # 업비트 서비스 시작일
+    upbit_start_date = datetime.date(2017, 10, 24)
+
+    # 조회 시작일이 업비트 서비스 시작일 이전이면 자동으로 변경
+    if start_date < upbit_start_date:
+        start_date = upbit_start_date
+        st.warning("업비트 가격을 가져오므로 조회 시작일을 2017년 10월 24일 서비스 개시일로 자동 변경합니다.")
+
 def fetch_full_ohlcv(exchange, symbol, timeframe, since, until):
     """업비트 API를 통해 전체 데이터를 가져오는 함수"""
     all_data = []
-    while since < until:
+    while since < until.timestamp() * 1000:
         try:
             ohlcv = exchange.fetch_ohlcv(symbol, timeframe, since, limit=200)  # 최대 200개
             if not ohlcv:
@@ -192,28 +200,7 @@ def fetch_full_ohlcv(exchange, symbol, timeframe, since, until):
             break
     return all_data
 
-# 초기값 설정
-codes = []  # codes 초기화
-add_usd = False
-add_krw = False
-add_apartment = False
-
-# ohlcv_data 초기화
-ohlcv_data = {}
-
 if fixed_ratio:
-    # 업비트 서비스 시작일
-    upbit_start_date = datetime.date(2017, 10, 24)
-
-    # 조회 시작일이 업비트 서비스 시작일 이전이면 자동으로 변경
-    if start_date < upbit_start_date:
-        start_date = upbit_start_date
-        st.warning("업비트 가격을 가져오므로 조회 시작일을 2017년 10월 24일 서비스 개시일로 자동 변경합니다.")
-
-    # 날짜 변환 (datetime.date → datetime.datetime)
-    start_datetime = datetime.datetime.combine(start_date, datetime.datetime.min.time())
-    end_datetime = datetime.datetime.combine(end_date, datetime.datetime.max.time())
-
     # 코인/종목 코드 입력 필드
     col_code1, col_code2, col_code3 = st.columns(3)
     with col_code1:
@@ -223,11 +210,21 @@ if fixed_ratio:
     with col_code3:
         code3 = st.text_input('자산코드 3', value='', placeholder='코드입력 - (예시)QQQ')
 
-    # 입력된 종목 코드 리스트 초기화 및 필터링
+    # 업비트 모듈 초기화
+    upbit = ccxt.upbit()
+
+    # 입력된 종목 코드 리스트
     codes = [code1.strip().upper(), code2.strip().upper(), code3.strip().upper()]
     codes = [code for code in codes if code]  # 빈 코드 제거
 
-    # 체크박스 추가
+    # 날짜 변환 (datetime.date → datetime.datetime)
+    try:
+        start_datetime = datetime.datetime.combine(start_date, datetime.datetime.min.time())
+        end_datetime = datetime.datetime.combine(end_date, datetime.datetime.max.time())
+    except NameError:
+        st.error("start_date와 end_date가 상위 코드에서 정의되지 않았습니다.")
+        st.stop()
+
     col_cb1, col_cb2, col_cb3 = st.columns(3)
     with col_cb1:
         add_usd = st.checkbox("USD/BTC(달러)")
@@ -242,6 +239,85 @@ if fixed_ratio:
             # 서울아파트 지수 데이터
             seoul_index_data = [
                 {"Date": "2017-10-24", "Index": 63.96632508},
+                {"Date": "2017-11-06", "Index": 64.35617101},
+                {"Date": "2017-12-04", "Index": 64.77498989},
+                {"Date": "2018-01-08", "Index": 65.41912996},
+                {"Date": "2018-02-05", "Index": 66.2597843},
+                {"Date": "2018-03-05", "Index": 66.93667665},
+                {"Date": "2018-04-02", "Index": 67.47642572},
+                {"Date": "2018-05-07", "Index": 67.84365247},
+                {"Date": "2018-06-04", "Index": 68.11497207},
+                {"Date": "2018-07-02", "Index": 68.35189802},
+                {"Date": "2018-08-06", "Index": 69.02103449},
+                {"Date": "2018-09-03", "Index": 71.13697588},
+                {"Date": "2018-10-01", "Index": 72.84264443},
+                {"Date": "2018-11-05", "Index": 73.54980454},
+                {"Date": "2018-12-03", "Index": 73.67782493},
+                {"Date": "2019-01-07", "Index": 73.66912294},
+                {"Date": "2019-02-11", "Index": 73.59136754},
+                {"Date": "2019-03-04", "Index": 73.49940939},
+                {"Date": "2019-04-01", "Index": 73.39241574},
+                {"Date": "2019-05-06", "Index": 73.32529968},
+                {"Date": "2019-06-03", "Index": 73.26978658},
+                {"Date": "2019-07-01", "Index": 73.37458253},
+                {"Date": "2019-08-05", "Index": 73.75976369},
+                {"Date": "2019-09-02", "Index": 74.08254476},
+                {"Date": "2019-10-07", "Index": 74.47874155},
+                {"Date": "2019-11-04", "Index": 74.90851283},
+                {"Date": "2019-12-02", "Index": 75.47541603},
+                {"Date": "2020-01-06", "Index": 76.19737372},
+                {"Date": "2020-02-03", "Index": 76.60351907},
+                {"Date": "2020-03-02", "Index": 77.06895445},
+                {"Date": "2020-04-06", "Index": 77.37230334},
+                {"Date": "2020-05-04", "Index": 77.38681535},
+                {"Date": "2020-06-01", "Index": 77.51479519},
+                {"Date": "2020-07-06", "Index": 78.95412896},
+                {"Date": "2020-08-03", "Index": 80.653417},
+                {"Date": "2020-09-07", "Index": 82.39792622},
+                {"Date": "2020-10-05", "Index": 83.13274188},
+                {"Date": "2020-11-02", "Index": 84.10555158},
+                {"Date": "2020-12-07", "Index": 85.40882464},
+                {"Date": "2021-01-04", "Index": 86.76133041},
+                {"Date": "2021-02-01", "Index": 88.10642651},
+                {"Date": "2021-03-01", "Index": 89.11993105},
+                {"Date": "2021-04-05", "Index": 90.31594141},
+                {"Date": "2021-05-03", "Index": 91.16407164},
+                {"Date": "2021-06-07", "Index": 92.63092873},
+                {"Date": "2021-07-05", "Index": 93.87841052},
+                {"Date": "2021-08-02", "Index": 94.94816887},
+                {"Date": "2021-09-06", "Index": 96.8861344},
+                {"Date": "2021-10-04", "Index": 97.95971642},
+                {"Date": "2021-11-01", "Index": 98.96926013},
+                {"Date": "2021-12-06", "Index": 99.69961851},
+                {"Date": "2022-01-03", "Index": 99.96762216},
+                {"Date": "2022-02-07", "Index": 100.0799603},
+                {"Date": "2022-03-07", "Index": 100.132464},
+                {"Date": "2022-04-04", "Index": 100.2198642},
+                {"Date": "2022-05-02", "Index": 100.3939195},
+                {"Date": "2022-06-06", "Index": 100.5870124},
+                {"Date": "2022-07-04", "Index": 100.6340279},
+                {"Date": "2022-08-01", "Index": 100.5714529},
+                {"Date": "2022-09-05", "Index": 100.2972065},
+                {"Date": "2022-10-03", "Index": 99.74424024},
+                {"Date": "2022-11-07", "Index": 98.57558449},
+                {"Date": "2022-12-05", "Index": 97.15531781},
+                {"Date": "2023-01-02", "Index": 95.66834187},
+                {"Date": "2023-02-06", "Index": 93.9327978},
+                {"Date": "2023-03-06", "Index": 92.81969614},
+                {"Date": "2023-04-03", "Index": 91.83450042},
+                {"Date": "2023-05-01", "Index": 91.11835052},
+                {"Date": "2023-06-05", "Index": 90.66957687},
+                {"Date": "2023-07-03", "Index": 90.46279702},
+                {"Date": "2023-08-07", "Index": 90.30724893},
+                {"Date": "2023-09-04", "Index": 90.51120829},
+                {"Date": "2023-10-09", "Index": 90.73258825},
+                {"Date": "2023-11-06", "Index": 90.83250941},
+                {"Date": "2023-12-04", "Index": 90.76284859},
+                {"Date": "2024-01-08", "Index": 90.59004917},
+                {"Date": "2024-02-05", "Index": 90.4420433},
+                {"Date": "2024-03-04", "Index": 90.33997655},
+                {"Date": "2024-04-01", "Index": 90.18279244},
+                {"Date": "2024-05-06", "Index": 90.13373237},
                 {"Date": "2024-06-03", "Index": 90.18959413},
                 {"Date": "2024-07-01", "Index": 90.48698013},
                 {"Date": "2024-08-05", "Index": 91.31906652},
@@ -254,29 +330,43 @@ if fixed_ratio:
             seoul_df["KRW"] = seoul_df["Index"] * 10_000_000  # 원화로 변환
 
             # BTC 가격 데이터 가져오기
-            btc_ohlcv = fetch_full_ohlcv(upbit, "BTC/KRW", "1d", int(start_datetime.timestamp() * 1000), int(end_datetime.timestamp() * 1000))
+            btc_ohlcv = fetch_full_ohlcv(upbit, "BTC/KRW", "1d", int(start_datetime.timestamp() * 1000), end_datetime)
             btc_df = pd.DataFrame(btc_ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
             btc_df["Date"] = pd.to_datetime(btc_df["timestamp"], unit="ms")
             btc_df = btc_df[["Date", "close"]].rename(columns={"close": "BTC_KRW"})
 
-            # 데이터 병합 및 보간
-            merged_df = pd.merge(seoul_df, btc_df, on="Date", how="outer").sort_values("Date")
-            merged_df["KRW"].interpolate(method="linear", inplace=True)
-            merged_df["BTC_KRW"].interpolate(method="linear", inplace=True)
+            # 데이터 병합
+            merged_df = pd.merge(seoul_df, btc_df, on="Date", how="outer")
+            merged_df = merged_df.sort_values("Date")
+            merged_df["KRW"].interpolate(method="linear", inplace=True)  # 서울아파트 지수 보간
+            merged_df["BTC_KRW"].interpolate(method="linear", inplace=True)  # BTC 가격 보간
             merged_df["Seoul/BTC"] = merged_df["KRW"] / merged_df["BTC_KRW"]
 
-            # 결과 저장
-            ohlcv_data["Seoul Apartment/BTC"] = merged_df.set_index("Date")["Seoul/BTC"]
+            # # 결과 출력
+            # st.write("서울아파트/BTC 데이터", merged_df)
 
-        except Exception as e:
+            # # 꺾은선 그래프 생성
+            # fig, ax = plt.subplots(figsize=(10, 6))
+            # ax.plot(merged_df["Date"], merged_df["Seoul/BTC"], label="Seoul Apartment/BTC", color="blue")
+            # ax.set_title("Seoul Apartment Price Relative to BTC", fontsize=16)
+            # ax.set_xlabel("Date", fontsize=12)
+            # ax.set_ylabel("Seoul Apartment/BTC", fontsize=12)
+            # ax.legend()
+            # ax.grid(True)
+            # plt.xticks(rotation=45)
+            # st.pyplot(fig)
+
+            except Exception as e:
             st.error(f"서울아파트/BTC 데이터를 계산하는 중 오류가 발생했습니다: {e}")
 
-    # 추가 자산 데이터 계산
+    # 기준시점 수익률 비교 차트 생성
+    ohlcv_data = {}
     if codes:
         for code in codes:
             try:
                 pair = f"{code}/BTC"
-                ohlcv = fetch_full_ohlcv(upbit, pair, "1d", int(start_datetime.timestamp() * 1000), int(end_datetime.timestamp() * 1000))
+                # 전체 데이터 가져오기
+                ohlcv = fetch_full_ohlcv(upbit, pair, "1d", int(start_datetime.timestamp() * 1000), end_datetime)
                 df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
                 df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
                 df.set_index("Date", inplace=True)
@@ -287,25 +377,26 @@ if fixed_ratio:
             except Exception as e:
                 st.warning(f"{code} 데이터를 가져오는 중 문제가 발생했습니다: {e}")
 
-    # USD/BTC 추가
+    # USD/BTC와 KRW/BTC 추가
     if add_usd:
         try:
-            usd_ohlcv = fetch_full_ohlcv(upbit, "BTC/USDT", "1d", int(start_datetime.timestamp() * 1000), int(end_datetime.timestamp() * 1000))
-            usd_df = pd.DataFrame(usd_ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
-            usd_df["Date"] = pd.to_datetime(usd_df["timestamp"], unit="ms")
-            usd_df.set_index("Date", inplace=True)
-            ohlcv_data["USD/BTC"] = 1 / usd_df["close"]
+            ohlcv = fetch_full_ohlcv(upbit, "BTC/USDT", "1d", int(start_datetime.timestamp() * 1000), end_datetime)
+            df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
+            df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
+            df.set_index("Date", inplace=True)
+            df = df.loc[start_datetime:end_datetime]
+            ohlcv_data["USD/BTC"] = 1 / df["close"]
         except Exception as e:
             st.warning("USD/BTC 데이터를 가져오는 중 문제가 발생했습니다: {e}")
 
-    # KRW/BTC 추가
     if add_krw:
         try:
-            krw_ohlcv = fetch_full_ohlcv(upbit, "BTC/KRW", "1d", int(start_datetime.timestamp() * 1000), int(end_datetime.timestamp() * 1000))
-            krw_df = pd.DataFrame(krw_ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
-            krw_df["Date"] = pd.to_datetime(krw_df["timestamp"], unit="ms")
-            krw_df.set_index("Date", inplace=True)
-            ohlcv_data["KRW/BTC"] = 1 / krw_df["close"]
+            ohlcv = fetch_full_ohlcv(upbit, "BTC/KRW", "1d", int(start_datetime.timestamp() * 1000), end_datetime)
+            df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
+            df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
+            df.set_index("Date", inplace=True)
+            df = df.loc[start_datetime:end_datetime]
+            ohlcv_data["KRW/BTC"] = 1 / df["close"]
         except Exception as e:
             st.warning("KRW/BTC 데이터를 가져오는 중 문제가 발생했습니다: {e}")
 
