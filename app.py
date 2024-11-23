@@ -199,7 +199,7 @@ if fixed_ratio:
     with col_code2:
         code2 = st.text_input('자산코드 2', value='', placeholder='코드입력 - (예시)SOL')
     with col_code3:
-        code3 = st.text_input('자산코드 3', value='', placeholder='코드입력 - (예시)QQQ')
+        code3 = st.text_input('자산코드 3', value='', placeholder='코드입력 - (예시)XRP')
 
     # 업비트 모듈 초기화
     upbit = ccxt.upbit()
@@ -286,7 +286,7 @@ if fixed_ratio:
         plt.xticks(rotation=45)
         st.pyplot(fig)
     else:
-        st.warning("조회할 수 있는 데이터가 없습니다.")
+        st.warning("조회결과가 없습니다. 코드를 입력해주세요.")
 
     #######################
 
