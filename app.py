@@ -12,6 +12,8 @@ from pycoingecko import CoinGeckoAPI
 import matplotlib.pyplot as plt
 import requests
 import ccxt
+import matplotlib.ticker as ticker
+
 # from matplotlib import font_manager
 
 # # 한글 폰트 설정 (폰트 이름으로 설정)
@@ -132,6 +134,25 @@ if show_btc_price_chart:
                 plt.xticks(rotation=45)
                 st.pyplot(fig)
 
+            # 꺾은선 차트 생성
+            if not df.empty:
+                fig, ax = plt.subplots(figsize=(10, 5))
+                ax.plot(df.index, df["close"], label="BTC Price (KRW)", color="green")
+            
+                # 세로축을 억 단위로 변환
+                def format_krw(value, tick_number):
+                    return f"{value / 1e8:.1f}억"  # 억 단위로 변환
+            
+                ax.yaxis.set_major_formatter(ticker.FuncFormatter(format_krw))
+            
+                ax.set_title("Bitcoin Price in KRW (Upbit)", fontsize=16)
+                ax.set_xlabel("Date", fontsize=12)
+                ax.set_ylabel("Price (억 KRW)", fontsize=12)
+                ax.grid(True)
+                ax.legend(fontsize=12)
+                plt.xticks(rotation=45)
+                st.pyplot(fig)
+                        
             # 1천만 원 투자 결과 계산
             if start_price and end_price:
                 st.markdown("<h2 style='font-size: 20px;'>1천만 원을 투자했다면,</h2>", unsafe_allow_html=True)
