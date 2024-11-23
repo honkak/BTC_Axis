@@ -176,24 +176,11 @@ st.markdown("---")
 # '비트코인 기준 자산흐름' 체크박스
 fixed_ratio = st.checkbox("비트코인 기준 자산흐름(Bitcoin Axis)_기준시점수익률")
 
-# 초기값 설정
-codes = []  # codes 초기화
-add_usd = False
-add_krw = False
-add_apartment = False
-
-if fixed_ratio:
-    # 업비트 서비스 시작일
-    upbit_start_date = datetime.date(2017, 10, 24)
-
-    # 조회 시작일이 업비트 서비스 시작일 이전이면 자동으로 변경
-    if start_date < upbit_start_date:
-        start_date = upbit_start_date
-        st.warning("업비트 가격을 가져오므로 조회 시작일을 2017년 10월 24일 서비스 개시일로 자동 변경합니다.")
+# fetch_full_ohlcv 함수 정의
 def fetch_full_ohlcv(exchange, symbol, timeframe, since, until):
     """업비트 API를 통해 전체 데이터를 가져오는 함수"""
     all_data = []
-    while since < until.timestamp() * 1000:
+    while since < until:
         try:
             ohlcv = exchange.fetch_ohlcv(symbol, timeframe, since, limit=200)  # 최대 200개
             if not ohlcv:
@@ -204,6 +191,24 @@ def fetch_full_ohlcv(exchange, symbol, timeframe, since, until):
             st.warning(f"{symbol} 데이터를 가져오는 중 문제가 발생했습니다: {e}")
             break
     return all_data
+
+# 초기값 설정
+codes = []  # codes 초기화
+add_usd = False
+add_krw = False
+add_apartment = False
+
+# ohlcv_data 초기화
+ohlcv_data = {}
+
+if fixed_ratio:
+    # 업비트 서비스 시작일
+    upbit_start_date = datetime.date(2017, 10, 24)
+
+    # 조회 시작일이 업비트 서비스 시작일 이전이면 자동으로 변경
+    if start_date < upbit_start_date:
+        start_date = upbit_start_date
+        st.warning("업비트 가격을 가져오므로 조회 시작일을 2017년 10월 24일 서비스 개시일로 자동 변경합니다.")
 
     # 날짜 변환 (datetime.date → datetime.datetime)
     start_datetime = datetime.datetime.combine(start_date, datetime.datetime.min.time())
@@ -230,9 +235,6 @@ def fetch_full_ohlcv(exchange, symbol, timeframe, since, until):
         add_krw = st.checkbox("KRW/BTC(원화)")
     with col_cb3:
         add_apartment = st.checkbox("서울아파트/BTC")
-
-    # 데이터 저장 딕셔너리 초기화
-    ohlcv_data = {}
 
     # 서울아파트/BTC 계산 추가
     if add_apartment:
@@ -329,7 +331,6 @@ def fetch_full_ohlcv(exchange, symbol, timeframe, since, until):
         st.pyplot(fig)
     else:
         st.warning("조회할 수 있는 데이터가 없습니다.")
-
 
 
 
