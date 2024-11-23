@@ -700,69 +700,35 @@ if show_kimchi_premium:
 st.markdown("---")
 
 #####################################
-
-# # 'USDT 1달러 추종 확인' 체크박스 추가
-# show_usdt_chart = st.checkbox("USDT 1달러 추종 확인")
-
-# if show_usdt_chart:
-#     try:
-#         # 데이터 가져오기
-#         prices = fetch_usdt_prices()
-#         df = pd.DataFrame(prices, columns=["timestamp", "price"])
-#         df["date"] = pd.to_datetime(df["timestamp"], unit="ms")
-#         df = df[["date", "price"]]
-
-#         # 차트 생성
-#         st.write("지난 100일 동안의 USDT 가격 변화")
-#         fig, ax = plt.subplots(figsize=(10, 6))
-#         ax.plot(df["date"], df["price"], label="USDT/USD Price")
-#         ax.axhline(y=1.0, color="red", linestyle="--", label="Target Price ($1)")
-#         ax.set_title("USDT/USD Price Over 100 Days")
-#         ax.set_xlabel("Date")
-#         ax.set_ylabel("Price (USD)")
-#         ax.legend()
-#         ax.grid()
-
-#         # Streamlit에 차트 표시
-#         st.pyplot(fig)
-
-#     except Exception as e:
-#         st.error(f"데이터를 가져오는 중 오류가 발생했습니다: {e}")
-
-# 'USDT 1달러 추종 확인' 체크박스 추가 (코드 최상단)
+# 'USDT 1달러 추종 확인' 체크박스 추가
 show_usdt_chart = st.checkbox("USDT 1달러 추종 확인")
 
-# 실제 과거 KRW/USD 데이터를 가져오는 함수
-def fetch_krw_usd_historical():
-    url = "https://api.exchangeratesapi.io/v1/timeseries"
-    params = {
-        "start_date": (pd.Timestamp.now() - pd.Timedelta(days=100)).strftime("%Y-%m-%d"),
-        "end_date": pd.Timestamp.now().strftime("%Y-%m-%d"),
-        "base": "USD",
-        "symbols": "KRW"
-    }
-    response = requests.get(url, params=params, headers={"apikey": "YOUR_API_KEY"})
+# 환율 데이터를 가져오는 함수
+def fetch_usd_to_krw_rate():
+    url = "https://api.exchangerate-api.com/v4/latest/USD"  # 예시 환율 API
+    response = requests.get(url)
     response.raise_for_status()
     data = response.json()
+    return data["rates"]["KRW"]
 
-    # 환율 데이터를 날짜별로 변환
-    historical_data = [{"date": pd.to_datetime(date), "price": rate["KRW"]} 
-                       for date, rate in data["rates"].items()]
-    return historical_data
-
-# 업비트 USDT/KRW 데이터를 가져오는 함수
+# 업비트에서 USDT/KRW 데이터를 가져오는 함수
 def fetch_usdt_krw_upbit():
     url = "https://api.upbit.com/v1/candles/days"
     params = {"market": "KRW-USDT", "count": 100}
     response = requests.get(url, params=params)
     response.raise_for_status()
     data = response.json()
+    # 날짜 및 종가 데이터 추출
     return [{"date": item["candle_date_time_utc"], "price": item["trade_price"]} for item in data]
 
-# USDT/USD 데이터를 가져오는 함수
+# CoinGecko에서 USDT/USD 데이터를 가져오는 함수
 def fetch_usdt_prices():
     url = "https://api.coingecko.com/api/v3/coins/tether/market_chart"
-    params = {"vs_currency": "usd", "days": "100", "interval": "daily"}
+    params = {
+        "vs_currency": "usd",
+        "days": "100",
+        "interval": "daily"
+    }
     response = requests.get(url, params=params)
     response.raise_for_status()
     data = response.json()
@@ -770,37 +736,49 @@ def fetch_usdt_prices():
 
 if show_usdt_chart:
     try:
-        # 환율 데이터 가져오기
-        krw_usd_historical = fetch_krw_usd_historical()
-        df_krw_usd = pd.DataFrame(krw_usd_historical)
+        # CoinGecko에서 USDT/USD 데이터 가져오기
+        prices_usdt_usd = fetch_usdt_prices()
+        df_usdt_usd = pd.DataFrame(prices_usdt_usd, columns=["timestamp", "price"])
+        df_usdt_usd["date"] = pd.to_datetime(df_usdt_usd["timestamp"], unit="ms")
+        df_usdt_usd = df_usdt_usd[["date", "price"]]
 
-        # 업비트 데이터 가져오기
+        # USD to KRW 환율 가져오기
+        usd_to_krw_rate = fetch_usd_to_krw_rate()
+
+        # 업비트에서 USDT/KRW 데이터 가져오기
         usdt_krw_data = fetch_usdt_krw_upbit()
         df_usdt_krw = pd.DataFrame(usdt_krw_data)
         df_usdt_krw["date"] = pd.to_datetime(df_usdt_krw["date"])
         df_usdt_krw.rename(columns={"price": "price_krw"}, inplace=True)
 
-        # 환율 변동 차트 그리기
-        st.write("KRW/USD 과거 변동 데이터")
-        fig, ax = plt.subplots(figsize=(10, 6))
-        ax.plot(df_krw_usd["date"], df_krw_usd["price"], label="Actual KRW/USD Rate", color="purple")
-        ax.set_title("KRW/USD Rate Over 100 Days")
-        ax.set_xlabel("Date")
-        ax.set_ylabel("Price (KRW)")
-        ax.legend()
-        ax.grid()
-        st.pyplot(fig)
+        # USD 기준 차트 생성
+        st.write("지난 100일 동안의 USDT 가격 변화 (USD 기준)")
+        fig_usd, ax_usd = plt.subplots(figsize=(10, 6))
+        ax_usd.plot(df_usdt_usd["date"], df_usdt_usd["price"], label="USDT/USD Price")
+        ax_usd.axhline(y=1.0, color="red", linestyle="--", label="Target Price ($1)")
+        ax_usd.set_title("USDT/USD Price Over 100 Days")
+        ax_usd.set_xlabel("Date")
+        ax_usd.set_ylabel("Price (USD)")
+        ax_usd.legend()
+        ax_usd.grid()
+        st.pyplot(fig_usd)
 
-        # USDT/KRW 차트 추가
+        # KRW 기준 차트 생성
+        df_usdt_usd["price_krw"] = df_usdt_usd["price"] * usd_to_krw_rate
         st.write("지난 100일 동안의 USDT 가격 변화 (KRW 기준)")
-        fig_usdt, ax_usdt = plt.subplots(figsize=(10, 6))
-        ax_usdt.plot(df_usdt_krw["date"], df_usdt_krw["price_krw"], label="USDT/KRW Price (Upbit)", color="blue")
-        ax_usdt.set_title("USDT/KRW Price Over 100 Days")
-        ax_usdt.set_xlabel("Date")
-        ax_usdt.set_ylabel("Price (KRW)")
-        ax_usdt.legend()
-        ax_usdt.grid()
-        st.pyplot(fig_usdt)
+        fig_krw, ax_krw = plt.subplots(figsize=(10, 6))
+        ax_krw.plot(df_usdt_krw["date"], df_usdt_krw["price_krw"], label="USDT/KRW Price (Upbit)", color="blue")
+        ax_krw.plot(df_usdt_usd["date"], df_usdt_usd["price_krw"], label=f"USDT/USD Price x {usd_to_krw_rate:.0f} (Exchange Rate)", color="orange")
+        ax_krw.axhline(y=usd_to_krw_rate, color="green", linestyle="--", label=f"Target Price ({usd_to_krw_rate:.0f} KRW)")
+        ax_krw.set_title("USDT/KRW Price Over 100 Days")
+        ax_krw.set_xlabel("Date")
+        ax_krw.set_ylabel("Price (KRW)")
+        ax_krw.legend()
+        ax_krw.grid()
+        st.pyplot(fig_krw)
+
+    except Exception as e:
+        st.error(f"데이터를 가져오는 중 오류가 발생했습니다: {e}")
 
     except Exception as e:
         st.error(f"데이터를 가져오는 중 오류가 발생했습니다: {e}")
