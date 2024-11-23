@@ -653,7 +653,7 @@ if show_usdt_chart:
         df_usdt_krw.rename(columns={"price": "price_krw"}, inplace=True)
 
         # USD 기준 차트 생성
-        st.write("지난 100일 동안의 USDT 가격 변화 (USD 기준)")
+        st.write("100일 동안의 USDT 가격 변화 (USD 기준)")
         fig_usd, ax_usd = plt.subplots(figsize=(10, 6))
         ax_usd.plot(df_usdt_usd["date"], df_usdt_usd["price"], label="USDT/USD Price")
         ax_usd.axhline(y=1.0, color="red", linestyle="--", label="Target Price ($1)")
@@ -666,7 +666,7 @@ if show_usdt_chart:
 
         # KRW 기준 차트 생성
         df_usdt_usd["price_krw"] = df_usdt_usd["price"] * usd_to_krw_rate
-        st.write("지난 100일 동안의 USDT 가격 변화 (KRW 기준)")
+        st.write("100일 동안의 USDT 가격 변화 (KRW 기준)")
         fig_krw, ax_krw = plt.subplots(figsize=(10, 6))
         ax_krw.plot(df_usdt_krw["date"], df_usdt_krw["price_krw"], label="USDT/KRW Price (Upbit)", color="blue")
         ax_krw.plot(df_usdt_usd["date"], df_usdt_usd["price_krw"], label=f"USDT/USD Price x {usd_to_krw_rate:.0f} (Exchange Rate)", color="orange")
