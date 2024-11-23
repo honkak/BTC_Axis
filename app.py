@@ -334,8 +334,10 @@ if fixed_ratio:
 
             # 전체 날짜 범위 생성
             all_dates = pd.date_range(start=start_datetime, end=end_datetime, freq="D")
-            seoul_df = seoul_df.set_index("Date").reindex(all_dates).reset_index()
-            seoul_df.rename(columns={"index": "Date"}, inplace=True)
+            seoul_df = seoul_df.set_index("Date").reindex(all_dates)  # 전체 날짜로 재구성
+            seoul_df.index.name = "Date"  # 인덱스 이름을 "Date"로 설정
+            seoul_df = seoul_df.reset_index()  # 인덱스를 다시 열로 복구
+            seoul_df["KRW"].interpolate(method="linear", inplace=True)  # 보간으로 빈 값 채우기
     
             # 보간으로 빈 값 채우기
             seoul_df["KRW"].interpolate(method="linear", inplace=True)
@@ -347,8 +349,10 @@ if fixed_ratio:
             btc_df = btc_df[["Date", "close"]].rename(columns={"close": "BTC_KRW"})
 
             # 전체 날짜 범위 생성 및 보간
-            btc_df = btc_df.set_index("Date").reindex(all_dates).reset_index()
-            btc_df["BTC_KRW"].interpolate(method="linear", inplace=True)
+            btc_df = btc_df.set_index("Date").reindex(all_dates)  # 전체 날짜로 재구성
+            btc_df.index.name = "Date"  # 인덱스 이름 설정
+            btc_df = btc_df.reset_index()  # 인덱스를 다시 열로 복구
+            btc_df["BTC_KRW"].interpolate(method="linear", inplace=True)  # 보간으로 빈 값 채우기
 
             # # 데이터 병합
             # merged_df = pd.merge(seoul_df, btc_df, on="Date", how="outer")
@@ -358,17 +362,16 @@ if fixed_ratio:
             # merged_df["Seoul/BTC"] = merged_df["KRW"] / merged_df["BTC_KRW"]
 
             # 데이터 병합
-            merged_df = pd.merge(seoul_df, btc_df, on="Date", how="outer")
-            merged_df["Seoul/BTC"] = merged_df["KRW"] / merged_df["BTC_KRW"]
+            merged_df = pd.merge(seoul_df, btc_df, on="Date", how="outer")  # "Date" 열 기준 병합
+            merged_df["Seoul/BTC"] = merged_df["KRW"] / merged_df["BTC_KRW"]  # 계산
 
             # 서울아파트 데이터 저장
             seoul_apartment_data = merged_df.set_index("Date")["Seoul/BTC"]
 
-            st.write("보간된 서울아파트 데이터", seoul_df)
-            st.write("보간된 BTC 데이터", btc_df)
-            
         except KeyError as e:
-            st.error(f"데이터프레임 처리 중 KeyError가 발생했습니다: {e}")
+            st.error(f"KeyError 발생: {e}")
+            st.write("서울아파트 데이터프레임 상태:", seoul_df.head())
+            st.write("BTC 데이터프레임 상태:", btc_df.head())
         except Exception as e:
             st.error(f"서울아파트/BTC 데이터를 계산하는 중 오류가 발생했습니다: {e}")
 
