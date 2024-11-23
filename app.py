@@ -342,8 +342,8 @@ if fixed_ratio:
             merged_df["BTC_KRW"].interpolate(method="linear", inplace=True)  # BTC 가격 보간
             merged_df["Seoul/BTC"] = merged_df["KRW"] / merged_df["BTC_KRW"]
 
-            # ohlcv_data에 추가
-            ohlcv_data["Seoul/BTC"] = merged_df.set_index("Date")["Seoul/BTC"]
+            # 서울아파트 데이터 저장
+            seoul_apartment_data = merged_df.set_index("Date")["Seoul/BTC"]
             
         except Exception as e:
             st.error(f"서울아파트/BTC 데이터를 계산하는 중 오류가 발생했습니다: {e}")
@@ -390,9 +390,19 @@ if fixed_ratio:
             st.warning("KRW/BTC 데이터를 가져오는 중 문제가 발생했습니다: {e}")
 
     # 최종 차트 생성
-    if ohlcv_data:
+    # if ohlcv_data:
+    #     df_combined = pd.DataFrame(ohlcv_data)
+    #     df_combined = df_combined / df_combined.iloc[0] * 100 - 100  # % 변화율
+
+    if ohlcv_data or seoul_apartment_data is not None:
+        # 종목 데이터를 데이터프레임으로 병합
         df_combined = pd.DataFrame(ohlcv_data)
         df_combined = df_combined / df_combined.iloc[0] * 100 - 100  # % 변화율
+
+    # 서울아파트 데이터 추가
+    if seoul_apartment_data is not None:
+        seoul_apartment_percent_change = (seoul_apartment_data / seoul_apartment_data.iloc[0] * 100 - 100)
+        df_combined["Seoul/BTC"] = seoul_apartment_percent_change
 
         fig, ax = plt.subplots(figsize=(12, 6))
         ax.set_ylabel("Percentage Change (%)", fontsize=12)
