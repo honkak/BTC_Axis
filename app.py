@@ -772,7 +772,7 @@ def fetch_krw_usd_historical():
 
     # 환율 데이터 생성 (가장 최근 값으로 100일간 일정하다고 가정)
     historical_data = [
-        {"date": datetime.utcnow() - timedelta(days=i), "price": data["rates"]["KRW"]}
+        {"date": datetime.datetime() - timedelta(days=i), "price": data["rates"]["KRW"]}
         for i in range(100)
     ]
     return historical_data
