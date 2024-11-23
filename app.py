@@ -792,6 +792,7 @@ if show_usdt_chart:
         df_usdt_krw["date"] = pd.to_datetime(df_usdt_krw["date"])
         df_usdt_krw.rename(columns={"price": "price_krw"}, inplace=True)
 
+        # 환율 데이터 가져오기
         krw_usd_historical = fetch_krw_usd_historical()
         df_krw_usd = pd.DataFrame(krw_usd_historical)
 
@@ -821,6 +822,18 @@ if show_usdt_chart:
         ax_krw.legend()
         ax_krw.grid()
         st.pyplot(fig_krw)
+
+        # 환율 변동 차트 그리기
+        st.write("KRW/USD 과거 변동 데이터")
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.plot(df_krw_usd["date"], df_krw_usd["price"], label="Actual KRW/USD Rate", color="purple")
+        ax.axhline(y=1400, color="green", linestyle="--", label="Target KRW/USD Rate (1400 KRW)")
+        ax.set_title("KRW/USD Rate Over 100 Days")
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Price (KRW)")
+        ax.legend()
+        ax.grid()
+        st.pyplot(fig)
 
     except Exception as e:
         st.error(f"데이터를 가져오는 중 오류가 발생했습니다: {e}")
