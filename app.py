@@ -435,8 +435,8 @@ if show_market_cap_chart:
         btc_dominance = (btc_market_cap / global_market_cap) * 100
 
         # 데이터 검증 및 출력
-        st.write(f"Global Market Cap (USD): {int(global_market_cap):,} USD")
-        st.write(f"Bitcoin Market Cap (USD): {int(btc_market_cap):,} USD")
+        st.write(f"Global Market Cap (USD): {int(global_market_cap):,} (USD)")
+        st.write(f"Bitcoin Market Cap (USD): {int(btc_market_cap):,} (USD)")
         st.write(f"Bitcoin Dominance: {btc_dominance:.2f}(%)")
 
         # 파이 차트 생성
