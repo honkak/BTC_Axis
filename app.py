@@ -179,39 +179,53 @@ fixed_ratio = st.checkbox("비트코인 기준 자산흐름(Bitcoin Axis)")
 if fixed_ratio:
     # 종목 코드 입력 필드
     col_code1, col_code2, col_code3 = st.columns(3)
-
     with col_code1:
         code1 = st.text_input('종목코드 1', value='', placeholder='종목코드를 입력하세요 - (예시)ETH')
-
     with col_code2:
         code2 = st.text_input('종목코드 2', value='', placeholder='종목코드를 입력하세요 - (예시)SOL')
-
     with col_code3:
-        code3 = st.text_input('종목코드 3', value='', placeholder='종목코드를 입력하세요 - (예시)ADA')
+        code3 = st.text_input('종목코드 3', value='', placeholder='종목코드를 입력하세요 - (예시)USDT')
 
-    # '기준시점 수익률 비교' 체크박스
-    baseline_return = st.checkbox("기준시점 수익률 비교(Baseline return)", value=True)
+    baseline_return = st.checkbox("기준시점 수익률 비교(Baseline return)")
 
     # 업비트 모듈 초기화
     upbit = ccxt.upbit()
 
     # 입력된 종목 코드 리스트
-    codes = [code1, code2, code3]
-    codes = [code.strip().upper() for code in codes if code.strip()]  # 빈 항목 제거 및 대문자 변환
+    codes = [code1.strip().upper(), code2.strip().upper(), code3.strip().upper()]
+    codes = [code for code in codes if code]  # 빈 코드 제거
 
     if codes:
-        # 데이터 가져오기
         ohlcv_data = {}
         for code in codes:
             try:
-                pair = f"{code}/BTC"
-                since = int(datetime.datetime.combine(start_date, datetime.datetime.min.time()).timestamp() * 1000)
-                ohlcv = upbit.fetch_ohlcv(pair, timeframe="1d", since=since)
-                df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
-                df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
-                df.set_index("Date", inplace=True)
-                df = df.loc[start_date:end_date]  # 조회 기간 필터링
-                ohlcv_data[code] = df["close"]
+                if code == "USDT":
+                    # USDT/BTC 계산
+                    usdt_data = upbit.fetch_ohlcv("USDT/KRW", timeframe="1d", since=int(start_date.timestamp() * 1000))
+                    btc_data = upbit.fetch_ohlcv("BTC/KRW", timeframe="1d", since=int(start_date.timestamp() * 1000))
+
+                    usdt_df = pd.DataFrame(usdt_data, columns=["timestamp", "open", "high", "low", "close", "volume"])
+                    btc_df = pd.DataFrame(btc_data, columns=["timestamp", "open", "high", "low", "close", "volume"])
+
+                    usdt_df["Date"] = pd.to_datetime(usdt_df["timestamp"], unit="ms")
+                    btc_df["Date"] = pd.to_datetime(btc_df["timestamp"], unit="ms")
+                    usdt_df.set_index("Date", inplace=True)
+                    btc_df.set_index("Date", inplace=True)
+
+                    usdt_df = usdt_df.loc[start_date:end_date]
+                    btc_df = btc_df.loc[start_date:end_date]
+
+                    usdt_btc = usdt_df["close"] / btc_df["close"]
+                    ohlcv_data["USDT/BTC"] = usdt_btc
+                else:
+                    # 일반 가상자산/BTC 데이터 가져오기
+                    pair = f"{code}/BTC"
+                    ohlcv = upbit.fetch_ohlcv(pair, timeframe="1d", since=int(start_date.timestamp() * 1000))
+                    df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
+                    df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
+                    df.set_index("Date", inplace=True)
+                    df = df.loc[start_date:end_date]
+                    ohlcv_data[f"{code}/BTC"] = df["close"]
             except Exception as e:
                 st.warning(f"{code}/BTC 데이터를 가져오는 중 문제가 발생했습니다: {e}")
 
@@ -225,11 +239,10 @@ if fixed_ratio:
                 df_combined = df_combined / df_combined.iloc[0] * 100 - 100  # % 변화율
                 ax.set_ylabel("Percentage Change (%)", fontsize=12)
             else:
-                # 절대가격 표시
                 ax.set_ylabel("Price (BTC)", fontsize=12)
 
             for column in df_combined.columns:
-                ax.plot(df_combined.index, df_combined[column], label=f"{column}/BTC")
+                ax.plot(df_combined.index, df_combined[column], label=column)
 
             ax.set_title("Asset Performance Relative to BTC", fontsize=16)
             ax.set_xlabel("Date", fontsize=12)
@@ -238,7 +251,7 @@ if fixed_ratio:
             plt.xticks(rotation=45)
             st.pyplot(fig)
         else:
-            st.warning("조회할 수 있는 데이터가 없습니다. 종목 코드를 확인하세요.")
+            st.warning("조회할 수 있는 데이터가 없습니다.")
 
 
 ######################################
