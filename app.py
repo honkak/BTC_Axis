@@ -342,20 +342,6 @@ if fixed_ratio:
             merged_df["BTC_KRW"].interpolate(method="linear", inplace=True)  # BTC 가격 보간
             merged_df["Seoul/BTC"] = merged_df["KRW"] / merged_df["BTC_KRW"]
 
-            # # 결과 출력
-            # st.write("서울아파트/BTC 데이터", merged_df)
-
-            # # 꺾은선 그래프 생성
-            # fig, ax = plt.subplots(figsize=(10, 6))
-            # ax.plot(merged_df["Date"], merged_df["Seoul/BTC"], label="Seoul Apartment/BTC", color="blue")
-            # ax.set_title("Seoul Apartment Price Relative to BTC", fontsize=16)
-            # ax.set_xlabel("Date", fontsize=12)
-            # ax.set_ylabel("Seoul Apartment/BTC", fontsize=12)
-            # ax.legend()
-            # ax.grid(True)
-            # plt.xticks(rotation=45)
-            # st.pyplot(fig)
-
         except Exception as e:
             st.error(f"서울아파트/BTC 데이터를 계산하는 중 오류가 발생했습니다: {e}")
 
