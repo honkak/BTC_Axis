@@ -276,13 +276,19 @@ krw_market_coins = [
     "SPURS"
 ]
 
-# 버튼 표시
-if st.button("업비트 코인 리스트 보기"):
-    # 리스트를 표시
-    st.markdown("### 업비트 코인 리스트")
-    for coin in krw_market_coins:
-        st.write(f"- {coin}")
+# Session State 초기화
+if "show_list" not in st.session_state:
+    st.session_state.show_list = False  # 리스트 숨김 상태 기본값
 
+# 버튼 클릭으로 상태 토글
+if st.button("원화 마켓 코인 리스트 토글"):
+    st.session_state.show_list = not st.session_state.show_list
+
+# 리스트 출력 여부 확인
+if st.session_state.show_list:
+    df = pd.DataFrame({"코인": krw_market_coins})
+    st.markdown("### 원화 마켓 코인 리스트")
+    st.dataframe(df, use_container_width=True)
 
 ######################################
 
