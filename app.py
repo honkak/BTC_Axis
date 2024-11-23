@@ -765,11 +765,17 @@ def fetch_usdt_prices():
 
 # 실제 환율 데이터를 가져오는 함수 (USD to KRW 과거 데이터)
 def fetch_krw_usd_historical():
-    url = "https://api.exchangerate-api.com/v4/latest/USD"
+    url = "https://api.exchangerate-api.com/v4/latest/USD"  # 예시 API
     response = requests.get(url)
     response.raise_for_status()
     data = response.json()
-    return [{"date": datetime.datetime() - pd.Timedelta(days=i), "price": data["rates"]["KRW"]} for i in range(100)]
+
+    # 환율 데이터 생성 (가장 최근 값으로 100일간 일정하다고 가정)
+    historical_data = [
+        {"date": datetime.utcnow() - timedelta(days=i), "price": data["rates"]["KRW"]}
+        for i in range(100)
+    ]
+    return historical_data
 
 
 if show_usdt_chart:
