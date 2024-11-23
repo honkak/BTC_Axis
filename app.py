@@ -110,13 +110,6 @@ if show_btc_price_chart:
             else:
                 st.warning(f"No closing price data available for {end_date}.")
 
-            # # 현재 날짜와 종료일 비교, 종료일이 오늘이면 현재 가격 출력
-            # today = datetime.date.today()
-            # if end_date == today:
-            #     ticker = upbit.fetch_ticker("BTC/KRW")
-            #     current_price = ticker["last"]
-            #     st.write(f"BTC Current Price (KRW) as of now: {current_price:,.0f} KRW")
-
             # 꺾은선 차트 생성
             if not df.empty:
                 st.write(f"BTC Price in KRW: {start_date} to {end_date}")
