@@ -181,58 +181,39 @@ if fixed_ratio:
     # 종목 코드 입력 필드
     col_code1, col_code2, col_code3 = st.columns(3)
     with col_code1:
-        code1 = st.text_input('종목코드 1', value='', placeholder='종목코드를 입력하세요 - (예시)ETH')
+        code1 = st.text_input('종목코드 1', value='', placeholder='종목코드를 입력하세요 - (예시)ethereum')
     with col_code2:
-        code2 = st.text_input('종목코드 2', value='', placeholder='종목코드를 입력하세요 - (예시)SOL')
+        code2 = st.text_input('종목코드 2', value='', placeholder='종목코드를 입력하세요 - (예시)solana')
     with col_code3:
-        code3 = st.text_input('종목코드 3', value='', placeholder='종목코드를 입력하세요 - (예시)USDT')
+        code3 = st.text_input('종목코드 3', value='', placeholder='종목코드를 입력하세요 - (예시)tether')
 
     baseline_return = st.checkbox("기준시점 수익률 비교(Baseline return)")
 
-    # 업비트 모듈 초기화
-    upbit = ccxt.upbit()
-
     # 입력된 종목 코드 리스트
-    codes = [code1.strip().upper(), code2.strip().upper(), code3.strip().upper()]
+    codes = [code1.strip().lower(), code2.strip().lower(), code3.strip().lower()]
     codes = [code for code in codes if code]  # 빈 코드 제거
-
-    # 조회 날짜 변환 (datetime.date -> datetime.datetime)
-    start_datetime = datetime.datetime.combine(start_date, datetime.datetime.min.time())
-    end_datetime = datetime.datetime.combine(end_date, datetime.datetime.max.time())
 
     if codes:
         ohlcv_data = {}
         for code in codes:
             try:
-                if code == "USDT":
-                    # USDT/BTC 계산
-                    usdt_data = upbit.fetch_ohlcv("USDT/KRW", timeframe="1d", since=int(start_datetime.timestamp() * 1000))
-                    btc_data = upbit.fetch_ohlcv("BTC/KRW", timeframe="1d", since=int(start_datetime.timestamp() * 1000))
+                # CoinGecko API에서 종목 데이터 가져오기
+                historical_data = cg.get_coin_market_chart_range_by_id(
+                    id=code,
+                    vs_currency='btc',
+                    from_timestamp=datetime.datetime.combine(start_date, datetime.datetime.min.time()).timestamp(),
+                    to_timestamp=datetime.datetime.combine(end_date, datetime.datetime.max.time()).timestamp()
+                )
 
-                    usdt_df = pd.DataFrame(usdt_data, columns=["timestamp", "open", "high", "low", "close", "volume"])
-                    btc_df = pd.DataFrame(btc_data, columns=["timestamp", "open", "high", "low", "close", "volume"])
-
-                    usdt_df["Date"] = pd.to_datetime(usdt_df["timestamp"], unit="ms")
-                    btc_df["Date"] = pd.to_datetime(btc_df["timestamp"], unit="ms")
-                    usdt_df.set_index("Date", inplace=True)
-                    btc_df.set_index("Date", inplace=True)
-
-                    usdt_df = usdt_df.loc[start_datetime:end_datetime]
-                    btc_df = btc_df.loc[start_datetime:end_datetime]
-
-                    usdt_btc = usdt_df["close"] / btc_df["close"]
-                    ohlcv_data["USDT/BTC"] = usdt_btc
-                else:
-                    # 일반 가상자산/BTC 데이터 가져오기
-                    pair = f"{code}/BTC"
-                    ohlcv = upbit.fetch_ohlcv(pair, timeframe="1d", since=int(start_datetime.timestamp() * 1000))
-                    df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
-                    df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
-                    df.set_index("Date", inplace=True)
-                    df = df.loc[start_datetime:end_datetime]
-                    ohlcv_data[f"{code}/BTC"] = df["close"]
+                # 데이터프레임으로 변환
+                prices = historical_data['prices']
+                df = pd.DataFrame(prices, columns=["timestamp", "price"])
+                df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
+                df.set_index("Date", inplace=True)
+                df = df.loc[start_date:end_date]
+                ohlcv_data[f"{code}/BTC"] = df["price"]
             except Exception as e:
-                st.warning(f"{code}/BTC 데이터를 가져오는 중 문제가 발생했습니다: {e}")
+                st.warning(f"{code} 데이터를 가져오는 중 문제가 발생했습니다: {e}")
 
         # 차트 생성
         if ohlcv_data:
@@ -263,23 +244,7 @@ if fixed_ratio:
         else:
             st.warning("조회할 수 있는 데이터가 없습니다.")
 
-# CoinGecko API 객체 생성
-cg = CoinGeckoAPI()
 
-# 시가총액 상위 10개 코인 데이터 가져오기
-top_coins = cg.get_coins_markets(vs_currency='usd', order='market_cap_desc', per_page=10, page=1)
-
-# 코인 리스트 생성
-coin_names = [coin['name'] for coin in top_coins]
-coin_symbols = [coin['symbol'].upper() for coin in top_coins]
-coin_prices = {coin['symbol'].upper(): coin['current_price'] for coin in top_coins}
-
-st.title("Top 10 Cryptocurrencies by Market Cap")
-
-# 각 코인에 대한 버튼 생성
-for coin_name, coin_symbol in zip(coin_names, coin_symbols):
-    if st.button(f"{coin_name} ({coin_symbol})"):
-        st.info(f"{coin_name} ({coin_symbol})의 현재 가격은 ${coin_prices[coin_symbol]:,.2f}입니다.")
 
 ######################################
 
