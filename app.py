@@ -314,10 +314,23 @@ coins = [
     ("밸리디티", "VAL"), ("일드길드게임즈", "YGG"), ("토트넘훗스퍼", "SPURS")
 ]
 
-
-# 6열 데이터프레임 구성
+# 코인 리스트 데이터프레임 구성
 columns = ["코인명1", "코인코드1", "코인명2", "코인코드2", "코인명3", "코인코드3"]
-data_etf = [
+data = []
+
+for i in range(0, len(coins), 3):
+    row = []
+    for j in range(3):
+        if i + j < len(coins):
+            row.extend(coins[i + j])
+        else:
+            row.extend(["", ""])  # 빈칸 채우기
+    data.append(row)
+
+df_coins = pd.DataFrame(data, columns=columns)
+
+# 주식/ETF 데이터 구성
+stocks = [
     ("S&P500", "SPY", "애플", "AAPL", "KODEX 200", "069500"),
     ("나스닥100", "QQQ", "마이크로소프트", "MSFT", "KODEX 코스닥150", "229200"),
     ("다우존스", "DIA", "아마존", "AMZN", "삼성전자", "005930"),
@@ -335,29 +348,8 @@ data_etf = [
     ("천연가스", "UNG", "", "", "", ""),
     ("농산물", "DBA", "", "", "", ""),
 ]
-data_etf_expanded = []
-
-for i in range(0, len(coins), 3):
-    row = []
-    for j in range(3):
-        if i + j < len(coins):
-            row.extend(coins[i + j])
-        else:
-            row.extend(["", ""])  # 빈칸 채우기
-    data.append(row)
-
-df_coins = pd.DataFrame(data, columns=columns)
-
-for i in range(0, len(stocks), 3):
-    row = []
-    for j in range(3):
-        if i + j < len(stocks):
-            row.extend(stocks[i + j])
-        else:
-            row.extend(["", ""])  # 빈칸 채우기
-    data_etf.append(row)
-
-df_etf = pd.DataFrame(data_etf, columns=columns_etf)
+columns_etf = ["미국ETF", "코드명1", "미국주식", "코드명2", "한국주식", "코드명3"]
+df_etf = pd.DataFrame(stocks, columns=columns_etf)
 
 # 스타일링 함수 정의
 def highlight_columns(x):
