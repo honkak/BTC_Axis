@@ -289,7 +289,7 @@ coins = [
 ]
 
 # 6열 데이터프레임 구성
-columns = ["코인명", "코인코드", "코인명", "코인코드", "코인명", "코인코드"]
+columns = ["코인명1", "코인코드1", "코인명2", "코인코드2", "코인명3", "코인코드3"]
 data = []
 
 for i in range(0, len(coins), 3):
@@ -313,7 +313,7 @@ def highlight_columns(x):
 if "show_table" not in st.session_state:
     st.session_state.show_table = False
 
-if st.button("코인 리스트 토글"):
+if st.button("코인 리스트"):
     st.session_state.show_table = not st.session_state.show_table
 
 if st.session_state.show_table:
