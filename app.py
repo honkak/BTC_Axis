@@ -173,21 +173,24 @@ if show_btc_price_chart:
 st.markdown("---")
 
 #####################################
-
-# 종목 코드 입력 필드
-col_code1, col_code2, col_code3 = st.columns(3)
-
-with col_code1:
-    code1 = st.text_input('종목코드 1', value='', placeholder='종목코드를 입력하세요 - (예시)QQQ')
-
-with col_code2:
-    code2 = st.text_input('종목코드 2', value='', placeholder='종목코드를 입력하세요 - (예시)005930')
-
-with col_code3:
-    code3 = st.text_input('종목코드 3', value='', placeholder='종목코드를 입력하세요 - (예시)AAPL')
-
-# '기준시점 수익률 비교' 체크박스
+# '비트코인 기준 자산흐름' 체크박스
 fixed_ratio = st.checkbox("비트코인 기준 자산흐름(Bitcoin Axis)")
+
+if fixed_ratio:
+    # 종목 코드 입력 필드
+    col_code1, col_code2, col_code3 = st.columns(3)
+
+    with col_code1:
+        code1 = st.text_input('종목코드 1', value='', placeholder='종목코드를 입력하세요 - (예시)QQQ')
+
+    with col_code2:
+        code2 = st.text_input('종목코드 2', value='', placeholder='종목코드를 입력하세요 - (예시)005930')
+
+    with col_code3:
+        code3 = st.text_input('종목코드 3', value='', placeholder='종목코드를 입력하세요 - (예시)AAPL')
+
+
+
 
 
 ######################################
