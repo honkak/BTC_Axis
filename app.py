@@ -601,6 +601,19 @@ st.markdown("---")
 # '김치프리미엄' 체크박스 추가
 show_kimchi_premium = st.checkbox("김치프리미엄 보기")
 
+# USDT 가격 데이터를 가져오는 함수
+def fetch_usdt_prices():
+    url = "https://api.coingecko.com/api/v3/coins/tether/market_chart"
+    params = {
+        "vs_currency": "usd",
+        "days": "100",
+        "interval": "daily"
+    }
+    response = requests.get(url, params=params)
+    response.raise_for_status()  # 오류 시 예외 발생
+    data = response.json()
+    return data["prices"]
+
 if show_kimchi_premium:
     try:
         # 환율 가져오기 함수
