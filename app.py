@@ -192,14 +192,14 @@ def fetch_full_ohlcv(exchange, symbol, timeframe, since, until):
     return all_data
 
 if fixed_ratio:
-    # 종목 코드 입력 필드
+    # 코인/종목 코드 입력 필드
     col_code1, col_code2, col_code3 = st.columns(3)
     with col_code1:
-        code1 = st.text_input('종목코드 1', value='', placeholder='코드입력 - (예시)ETH')
+        code1 = st.text_input('자산코드 1', value='', placeholder='코드입력 - (예시)ETH')
     with col_code2:
-        code2 = st.text_input('종목코드 2', value='', placeholder='코드입력 - (예시)SOL')
+        code2 = st.text_input('자산코드 2', value='', placeholder='코드입력 - (예시)SOL')
     with col_code3:
-        code3 = st.text_input('종목코드 3', value='', placeholder='코드입력 - (예시)USDT')
+        code3 = st.text_input('자산코드 3', value='', placeholder='코드입력 - (예시)QQQ')
 
     # 업비트 모듈 초기화
     upbit = ccxt.upbit()
