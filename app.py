@@ -681,13 +681,13 @@ st.markdown("---")
 #     except Exception as e:
 #         st.error(f"데이터를 가져오는 중 오류가 발생했습니다: {e}")
         
-# CoinGecko에서 USDT/USD 데이터를 가져오는 함수 (10일)
+# CoinGecko에서 USDT/USD 데이터를 가져오는 함수 (100일)
 @st.cache_data(ttl=3600)  # 데이터를 1시간 동안 캐싱
 def fetch_usdt_prices():
     url = "https://api.coingecko.com/api/v3/coins/tether/market_chart"
     params = {
         "vs_currency": "usd",
-        "days": "10",  # 데이터를 10일로 제한
+        "days": "100",  # 데이터를 100일로 제한
         "interval": "daily"
     }
     response = requests.get(url, params=params)
@@ -708,7 +708,7 @@ def fetch_usd_to_krw_rate():
 @st.cache_data(ttl=3600)  # 데이터를 1시간 동안 캐싱
 def fetch_usdt_krw_upbit():
     url = "https://api.upbit.com/v1/candles/days"
-    params = {"market": "KRW-USDT", "count": 10}  # 10일 데이터만 요청
+    params = {"market": "KRW-USDT", "count": 100}  # 100일 데이터만 요청
     response = requests.get(url, params=params)
     response.raise_for_status()
     data = response.json()
@@ -735,7 +735,7 @@ if show_usdt_chart:
         df_usdt_krw.rename(columns={"price": "price_krw"}, inplace=True)
 
         # USD 기준 차트 생성
-        st.write("10일 동안의 USDT 가격 변화 (USD 기준)")
+        st.write("100일 동안의 USDT 가격 변화 (USD 기준)")
         fig_usd, ax_usd = plt.subplots(figsize=(10, 6))
         ax_usd.plot(df_usdt_usd["date"], df_usdt_usd["price"], label="USDT/USD Price")
         ax_usd.axhline(y=1.0, color="red", linestyle="--", label="Target Price ($1)")
@@ -748,7 +748,7 @@ if show_usdt_chart:
 
         # KRW 기준 차트 생성
         df_usdt_usd["price_krw"] = df_usdt_usd["price"] * usd_to_krw_rate
-        st.write("10일 동안의 USDT 가격 변화 (KRW 기준)")
+        st.write("100일 동안의 USDT 가격 변화 (KRW 기준)")
         fig_krw, ax_krw = plt.subplots(figsize=(10, 6))
         ax_krw.plot(df_usdt_krw["date"], df_usdt_krw["price_krw"], label="USDT/KRW Price (Upbit)", color="blue")
         ax_krw.plot(df_usdt_usd["date"], df_usdt_usd["price_krw"], label=f"USDT/USD Price x {usd_to_krw_rate:.0f} (Exchange Rate)", color="orange")
