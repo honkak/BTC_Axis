@@ -3,7 +3,7 @@
 ##############################################
 
 import streamlit as st
-import FinanceDataReader as fdr
+import FinanceDataReader as fdr # <--- FinanceDataReader 재추가
 import datetime
 import pandas as pd
 from pycoingecko import CoinGeckoAPI
@@ -19,17 +19,15 @@ st.markdown("<h2 style='font-size: 30px; text-align: center;'>다빈치 BITCOIN 
 col_start_date, col_end_date = st.columns(2)
 
 with col_start_date:
-    # datetime.date 객체
     start_date = st.date_input(
         "조회 시작일을 선택해 주세요",
-        datetime.datetime(2025, 1, 1).date() # .date() 추가
+        datetime.datetime(2025, 1, 1)
     )
 
 with col_end_date:
-    # datetime.date 객체
     end_date = st.date_input(
         "조회 종료일을 선택해 주세요",
-        datetime.datetime.now().date() # .date() 추가
+        datetime.datetime.now()
     )
 
 # 시작 날짜와 종료 날짜 비교
@@ -67,13 +65,9 @@ if show_btc_price_chart:
             st.warning("조회 종료일이 미래 날짜이므로 종료일을 오늘로 설정합니다.")
             end_date = today
 
-        # datetime.date를 datetime.datetime으로 변환
-        start_datetime = datetime.datetime.combine(start_date, datetime.datetime.min.time())
-        end_datetime = datetime.datetime.combine(end_date, datetime.datetime.max.time())
-
         # 데이터 조회를 위한 타임스탬프 변환
-        since = int(start_datetime.timestamp() * 1000)
-        end_timestamp = int(end_datetime.timestamp() * 1000)
+        since = int(datetime.datetime.combine(start_date, datetime.datetime.min.time()).timestamp() * 1000)
+        end_timestamp = int(datetime.datetime.combine(end_date, datetime.datetime.max.time()).timestamp() * 1000)
 
         # 데이터 조회
         ohlcv = []
@@ -169,9 +163,7 @@ fixed_ratio = st.checkbox("BTC 기준 자산흐름(Bitcoin Axis)")
 def fetch_full_ohlcv(exchange, symbol, timeframe, since, until):
     """업비트 API를 통해 전체 데이터를 가져오는 함수"""
     all_data = []
-    # until은 datetime.datetime 객체
-    until_ms = until.timestamp() * 1000
-    while since < until_ms:
+    while since < until.timestamp() * 1000:
         try:
             ohlcv = exchange.fetch_ohlcv(symbol, timeframe, since, limit=200)  # 최대 200개
             if not ohlcv:
@@ -288,7 +280,7 @@ coins = [
     ("솔라나", "SOL"), ("폴카닷", "DOT"), ("도지코인", "DOGE"), ("체인링크", "LINK"),
     ("라이트코인", "LTC"), ("비트코인캐시", "BCH"), ("스텔라루멘", "XLM"), ("트론", "TRX"),
     ("이오스", "EOS"), ("비체인", "VET"), ("테조스", "XTZ"), ("코스모스", "ATOM"),
-    ("파일코인", "FIL"), ("이더리움클래식", "ETC"), ("NEO", "NEO"), ("퀀텀", "QTUM"),
+    ("파일코인", "FIL"), ("이더리움클래식", "ETC"), ("네오", "NEO"), ("퀀텀", "QTUM"),
     ("아이콘", "ICX"), ("온톨로지", "ONT"), ("질리카", "ZIL"), ("스테이터스네트워크토큰", "SNT"),
     ("메인프레임", "MFT"), ("시빅", "CVC"), ("스톰엑스", "STMX"), ("펀디엑스", "PUNDIX"),
     ("오미세고", "OMG"), ("왁스", "WAXP"), ("엔진코인", "ENJ"), ("디센트럴랜드", "MANA"),
@@ -363,9 +355,9 @@ if show_market_cap_chart:
     cg = CoinGeckoAPI()
 
     try:
-        # 강제로 현재 시점 기준으로 365일 전부터 데이터 설정 (도미넌스 기능은 기간 고정)
-        end_date_dom = datetime.datetime.now()
-        start_date_dom = end_date_dom - datetime.timedelta(days=365)
+        # 강제로 현재 시점 기준으로 365일 전부터 데이터 설정
+        end_date = datetime.datetime.now()
+        start_date = end_date - datetime.timedelta(days=365)
 
         # 상위 암호화폐 시가총액 가져오기 (최신 데이터)
         top_coins = cg.get_coins_markets(vs_currency='usd', order='market_cap_desc', per_page=100, page=1)
@@ -416,8 +408,8 @@ if show_market_cap_chart:
         st.pyplot(fig)
 
         # 365일 전부터 현재까지 BTC 도미넌스 데이터 가져오기
-        start_timestamp = int(start_date_dom.timestamp())
-        end_timestamp = int(end_date_dom.timestamp())
+        start_timestamp = int(start_date.timestamp())
+        end_timestamp = int(end_date.timestamp())
         btc_dominance_data = cg.get_coin_market_chart_range_by_id(
             id='bitcoin',
             vs_currency='usd',
@@ -433,8 +425,12 @@ if show_market_cap_chart:
         ]
 
         # 강제 기간: 365일 전부터 현재 날짜까지
-        start_date_str = start_date_dom.strftime("%Y-%m-%d")
-        end_date_str = end_date_dom.strftime("%Y-%m-%d")
+        end_date = datetime.datetime.now()
+        start_date = end_date - datetime.timedelta(days=365)
+        
+        # 날짜를 문자열로 포맷
+        start_date_str = start_date.strftime("%Y-%m-%d")
+        end_date_str = end_date.strftime("%Y-%m-%d")
 
         
         # 꺾은선 그래프 생성
@@ -463,60 +459,58 @@ st.markdown("---")
 # '김치프리미엄' 체크박스 추가
 show_kimchi_premium = st.checkbox("김치프리미엄 보기")
 
-# 환율 가져오기 함수 (현재 환율)
-@st.cache_data(ttl=3600)
-def get_exchange_rate():
-    url = "https://open.er-api.com/v6/latest/USD"
-    response = requests.get(url)
-    response.raise_for_status()
+# CoinGecko에서 USDT/USD 데이터를 가져오는 함수 (100일) - 함수 이름 변경
+@st.cache_data(ttl=3600)  # 데이터를 1시간 동안 캐싱
+def fetch_usdt_prices_cg():
+    url = "https://api.coingecko.com/api/v3/coins/tether/market_chart"
+    params = {
+        "vs_currency": "usd",
+        "days": "100",
+        "interval": "daily"
+    }
+    response = requests.get(url, params=params)
+    response.raise_for_status()  # 오류 시 예외 발생
     data = response.json()
-    return data['rates']['KRW']
+    return data["prices"]
 
 
 if show_kimchi_premium:
     try:
-        # 업비트와 코인게코 데이터를 사용한 김치프리미엄 계산 (기간 반영)
+        # 환율 가져오기 함수 (현재 환율)
+        @st.cache_data(ttl=3600)
+        def get_exchange_rate():
+            url = "https://open.er-api.com/v6/latest/USD"
+            response = requests.get(url)
+            response.raise_for_status()
+            data = response.json()
+            return data['rates']['KRW']
+
+        # 업비트와 코인게코 데이터를 사용한 김치프리미엄 계산
         def fetch_historical_data():
             upbit = ccxt.upbit()
             cg = CoinGeckoAPI()
-            
-            # 선택한 기간 기준으로 설정 (글로벌 start_date, end_date 사용)
-            end_datetime = datetime.datetime.combine(end_date, datetime.datetime.max.time())
-            start_datetime = datetime.datetime.combine(start_date, datetime.datetime.min.time())
 
-            # Data 조회 (Upbit BTC/KRW - Iterative Fetching)
-            ohlcv_upbit = []
-            from_time = int(start_datetime.timestamp() * 1000)
-            end_time_ms = int(end_datetime.timestamp() * 1000)
-            
-            while from_time < end_time_ms:
-                data = upbit.fetch_ohlcv("BTC/KRW", timeframe="1d", since=from_time, limit=200)
-                if not data:
-                    break
-                ohlcv_upbit.extend(data)
-                
-                # 다음 시작 시간 설정
-                last_time = data[-1][0]
-                if last_time >= end_time_ms or last_time == from_time:
-                    break
-                from_time = last_time + 1 
+            # 최근 100일 기준으로 설정
+            end_date_hist = datetime.datetime.now()
+            start_date_hist = end_date_hist - datetime.timedelta(days=100)
 
-            upbit_df = pd.DataFrame(ohlcv_upbit, columns=["timestamp", "open", "high", "low", "close", "volume"])
-            upbit_df["Date"] = pd.to_datetime(upbit_df["timestamp"], unit="ms").dt.normalize()
+            # 업비트 데이터 가져오기
+            since = int(start_date_hist.timestamp() * 1000)
+            upbit_data = upbit.fetch_ohlcv("BTC/KRW", timeframe="1d", since=since)
+            upbit_df = pd.DataFrame(upbit_data, columns=["timestamp", "open", "high", "low", "close", "volume"])
+            upbit_df["Date"] = pd.to_datetime(upbit_df["timestamp"], unit="ms")
             upbit_df.set_index("Date", inplace=True)
-            upbit_df = upbit_df.loc[start_date:end_date] # 최종 필터링 (datetime.date 사용)
 
-            # 코인게코 데이터를 가져오기 (BTC/USD range)
+            # 코인게코 데이터를 가져오기
             btc_market_data = cg.get_coin_market_chart_range_by_id(
                 id="bitcoin",
                 vs_currency="usd",
-                from_timestamp=int(start_datetime.timestamp()),
-                to_timestamp=int(end_datetime.timestamp())
+                from_timestamp=int(start_date_hist.timestamp()),
+                to_timestamp=int(end_date_hist.timestamp())
             )
             cg_df = pd.DataFrame(btc_market_data["prices"], columns=["timestamp", "price_usd"])
-            cg_df["Date"] = pd.to_datetime(cg_df["timestamp"], unit="ms").dt.normalize()
+            cg_df["Date"] = pd.to_datetime(cg_df["timestamp"], unit="ms")
             cg_df.set_index("Date", inplace=True)
-            cg_df = cg_df.loc[start_date:end_date] # 최종 필터링 (datetime.date 사용)
 
             # 환율 적용 (현재 환율 사용)
             exchange_rate = get_exchange_rate()
@@ -545,12 +539,11 @@ if show_kimchi_premium:
         fig, ax = plt.subplots(figsize=(12, 6))
         ax.plot(df.index, df["Kimchi Premium (%)"], label="Kimchi Premium (%)", color="blue")
         ax.axhline(0, color="red", linestyle="--", label="Parity Line (0%)")
-        ax.set_title(f"Kimchi Premium Over Time ({start_date} to {end_date}) (Upbit vs CoinGecko)")
+        ax.set_title("Kimchi Premium Over Last 100 Days (Upbit vs CoinGecko)")
         ax.set_xlabel("Date")
         ax.set_ylabel("Kimchi Premium (%)")
         ax.legend()
         ax.grid()
-        plt.xticks(rotation=45)
 
         # 현재 김치프리미엄 값 출력
         if current_premium is not None:
@@ -573,18 +566,14 @@ st.markdown("---")
 #####################################
 # 'USDT 가격변화' 기능 구현
         
-# CoinGecko에서 USDT/USD 데이터를 가져오는 함수 (기간 반영)
+# CoinGecko에서 USDT/USD 데이터를 가져오는 함수 (100일)
 @st.cache_data(ttl=3600)  # 데이터를 1시간 동안 캐싱
-def fetch_usdt_prices_cg(start_datetime, end_datetime):
-    # CoinGecko API는 timestamp를 사용합니다.
-    start_timestamp = int(start_datetime.timestamp())
-    end_timestamp = int(end_datetime.timestamp())
-
-    url = "https://api.coingecko.com/api/v3/coins/tether/market_chart/range"
+def fetch_usdt_prices_cg():
+    url = "https://api.coingecko.com/api/v3/coins/tether/market_chart"
     params = {
         "vs_currency": "usd",
-        "from": start_timestamp,
-        "to": end_timestamp
+        "days": "100",  # 데이터를 100일로 제한
+        "interval": "daily"
     }
     response = requests.get(url, params=params)
     response.raise_for_status()
@@ -592,14 +581,15 @@ def fetch_usdt_prices_cg(start_datetime, end_datetime):
     return data["prices"]
 
 
-# USD/KRW 역사적 환율 데이터를 가져오는 함수 (FinanceDataReader 사용, 기간 반영)
+# USD/KRW 역사적 환율 데이터를 가져오는 함수 (FinanceDataReader 사용)
 @st.cache_data(ttl=3600)
-def fetch_historical_usd_krw_rate(start_date, end_date):
-    start_date_str = start_date.strftime("%Y-%m-%d")
-    end_date_str = end_date.strftime("%Y-%m-%d")
+def fetch_historical_usd_krw_rate():
+    end_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    start_date = (datetime.datetime.now() - datetime.timedelta(days=100)).strftime("%Y-%m-%d")
     
     # USD/KRW 환율 데이터 가져오기
-    df_fx = fdr.DataReader('USD/KRW', start=start_date_str, end=end_date_str)
+    # FinanceDataReader를 사용하여 'USD/KRW' 심볼을 조회
+    df_fx = fdr.DataReader('USD/KRW', start=start_date, end=end_date)
     
     # 인덱스 이름 'date'로 정규화 및 날짜만 남기기
     df_fx.index = df_fx.index.normalize()
@@ -609,20 +599,24 @@ def fetch_historical_usd_krw_rate(start_date, end_date):
     return df_fx['Close'].rename('FX_KRW_Price')
 
 
-# 업비트에서 USDT/KRW 데이터를 가져오는 함수 (기간 반영)
+# 환율 데이터를 가져오는 함수 (USD -> KRW, 현재 환율)
 @st.cache_data(ttl=3600)  # 데이터를 1시간 동안 캐싱
-def fetch_usdt_krw_upbit(start_date, end_date):
-    delta = end_date - start_date
-    count = delta.days + 1
-    
-    # Upbit API는 count를 사용합니다 (최대 200).
+def fetch_usd_to_krw_rate():
+    url = "https://api.exchangerate-api.com/v4/latest/USD"
+    response = requests.get(url)
+    response.raise_for_status()
+    data = response.json()
+    return data["rates"]["KRW"]
+
+# 업비트에서 USDT/KRW 데이터를 가져오는 함수
+@st.cache_data(ttl=3600)  # 데이터를 1시간 동안 캐싱
+def fetch_usdt_krw_upbit():
     url = "https://api.upbit.com/v1/candles/days"
-    params = {"market": "KRW-USDT", "count": count}
-    
+    params = {"market": "KRW-USDT", "count": 100}  # 100일 데이터만 요청
     response = requests.get(url, params=params)
     response.raise_for_status()
     data = response.json()
-    # API가 최신 데이터를 먼저 반환하므로, 시간순으로 정렬
+    # 최신 데이터가 맨 뒤로 오도록 순서를 뒤집음
     data.reverse()
     return [{"date": item["candle_date_time_utc"], "price": item["trade_price"]} for item in data]
 
@@ -631,43 +625,50 @@ show_usdt_chart = st.checkbox("USDT 가격변화")
 
 if show_usdt_chart:
     try:
-        # 날짜 변환 (datetime.date → datetime.datetime)
-        start_datetime = datetime.datetime.combine(start_date, datetime.datetime.min.time())
-        end_datetime = datetime.datetime.combine(end_date, datetime.datetime.max.time())
-        
         # CoinGecko에서 USDT/USD 데이터 가져오기
-        prices_usdt_usd = fetch_usdt_prices_cg(start_datetime, end_datetime)
+        prices_usdt_usd = fetch_usdt_prices_cg()
         df_usdt_usd = pd.DataFrame(prices_usdt_usd, columns=["timestamp", "price"])
         df_usdt_usd["date"] = pd.to_datetime(df_usdt_usd["timestamp"], unit="ms").dt.normalize()
         df_usdt_usd = df_usdt_usd[["date", "price"]].set_index("date").rename(columns={"price": "USDT_CG_USD_Price"})
 
+        # USD to KRW 환율 (현재 환율, 수평선용)
+        usd_to_krw_latest = fetch_usd_to_krw_rate()
+
         # 업비트에서 USDT/KRW 데이터 가져오기
-        usdt_krw_data = fetch_usdt_krw_upbit(start_date, end_date)
+        usdt_krw_data = fetch_usdt_krw_upbit()
         df_usdt_krw = pd.DataFrame(usdt_krw_data)
         df_usdt_krw["date"] = pd.to_datetime(df_usdt_krw["date"]).dt.normalize()
         df_usdt_krw.rename(columns={"price": "price_krw"}, inplace=True)
         df_usdt_krw = df_usdt_krw.set_index("date")
         
         # USD/KRW 역사적 환율 데이터 가져오기
-        df_fx_krw = fetch_historical_usd_krw_rate(start_date, end_date)
+        df_fx_krw = fetch_historical_usd_krw_rate()
 
         # 데이터 병합 (날짜를 기준으로)
-        # CoinGecko (USDT/USD), Upbit (USDT/KRW), FDR (USD/KRW)
         df_combined = df_usdt_usd.merge(df_usdt_krw, left_index=True, right_index=True, how='inner')
         df_combined = df_combined.merge(df_fx_krw, left_index=True, right_index=True, how='inner')
         
+        # CoinGecko USDT 가격을 역사적 FX 환율로 변환 (참고용)
+        df_combined["USDT_CG_KRW_Converted"] = df_combined["USDT_CG_USD_Price"] * df_combined["FX_KRW_Price"]
+
         
         # KRW 기준 차트 생성
-        st.write(f"USDT 및 USD 가격 변화 (KRW 기준): {start_date} to {end_date}")
+        st.write("100일 동안의 USDT 및 USD 가격 변화 (KRW 기준)")
         fig_krw, ax_krw = plt.subplots(figsize=(10, 6))
         
         # 1. 업비트 USDT/KRW 가격 (파란색)
         ax_krw.plot(df_combined.index, df_combined["price_krw"], label="USDT/KRW Price (Upbit)", color="blue")
         
-        # 2. USD/KRW 역사적 환율 (빨간색) 
+        # 2. USD/KRW 역사적 환율 (빨간색) <--- 사용자 요청 추가 차트
         ax_krw.plot(df_combined.index, df_combined["FX_KRW_Price"], label="USD/KRW Historical Exchange Rate (FX Market)", color="red")
         
-        ax_krw.set_title("USDT/KRW vs USD/KRW Price Over Time")
+        # 3. CoinGecko USDT 환율 변환 (주황색 점선, 보조선)
+        ax_krw.plot(df_combined.index, df_combined["USDT_CG_KRW_Converted"], label="USDT/USD (CG) x FX Rate (Reference)", color="orange", linestyle='--')
+        
+        # 4. 현재 외환 시장 환율 수평선
+        ax_krw.axhline(y=usd_to_krw_latest, color="green", linestyle=":", label=f"Latest FX Rate ({usd_to_krw_latest:,.0f} KRW)")
+        
+        ax_krw.set_title("USDT/KRW vs USD/KRW Price Over 100 Days")
         ax_krw.set_xlabel("Date")
         ax_krw.set_ylabel("Price (KRW)")
         ax_krw.legend()
@@ -685,7 +686,7 @@ if show_usdt_chart:
         st.markdown(
             f"""
             <p style='font-size: 16px;'>
-                <strong>[최신 데이터 ({df_combined.index[-1].strftime('%Y-%m-%d')})]</strong><br>
+                <strong>[최신 데이터]</strong><br>
                 업비트 USDT/KRW 가격: {latest_upbit_krw:,.2f} KRW<br>
                 실제 USD/KRW 외환시장 환율: {latest_usd_fx:,.2f} KRW<br>
                 <span style='color: {'red' if premium_percent >= 0 else 'blue'};'>USDT (업비트) 프리미엄/디스카운트: {premium_percent:.2f}%</span>
