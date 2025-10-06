@@ -458,7 +458,7 @@ st.markdown("---")
 
 # '김치프리미엄' 체크박스 추가
 show_kimchi_premium = st.checkbox("김치프리미엄 보기")
-st.write("100일 동안의 Bitcoin 김치프리미엄 변화추이")
+
 
 # CoinGecko에서 USDT/USD 데이터를 가져오는 함수 (100일)
 @st.cache_data(ttl=3600)  # 데이터를 1시간 동안 캐싱
@@ -476,6 +476,7 @@ def fetch_usdt_prices_cg():
 
 
 if show_kimchi_premium:
+    st.write("100일 동안의 Bitcoin 김치프리미엄 변화추이") # 체크박스 클릭 시 텍스트 표시
     try:
         # 환율 가져오기 함수 (현재 환율)
         @st.cache_data(ttl=3600)
@@ -548,10 +549,10 @@ if show_kimchi_premium:
         
         st.pyplot(fig)
         
-        # 현재 김치프리미엄 값 출력
+        # 현재 김치프리미엄 값 출력 (수정된 부분: 붉은 글씨 적용)
         if current_premium is not None:
             st.markdown(
-                f"<p style='font-size: 16px;'>현재 Bitcoin 김치 프리미엄: <b>{current_premium:.2f}%</b></p>",
+                f"<p style='font-size: 16px;'><span style='color: red;'>현재 Bitcoin 김치 프리미엄:</span> <b>{current_premium:.2f}%</b></p>",
                 unsafe_allow_html=True
             )
     except Exception as e:
@@ -635,10 +636,6 @@ if show_usdt_chart:
         df_combined = df_usdt_usd.merge(df_usdt_krw, left_index=True, right_index=True, how='inner')
         df_combined = df_combined.merge(df_fx_krw, left_index=True, right_index=True, how='inner')
         
-        # 이전의 'USDT_CG_KRW_Converted' 컬럼 계산 코드 삭제
-        # df_combined["USDT_CG_KRW_Converted"] = df_combined["USDT_CG_USD_Price"] * df_combined["FX_KRW_Price"]
-
-        
         # KRW 기준 차트 생성
         st.write("100일 동안의 USDT 및 USD 가격 변화 (KRW 기준)")
         fig_krw, ax_krw = plt.subplots(figsize=(10, 6))
@@ -646,11 +643,9 @@ if show_usdt_chart:
         # 1. 업비트 USDT/KRW 가격 (파란색)
         ax_krw.plot(df_combined.index, df_combined["price_krw"], label="USDT/KRW Price (Upbit)", color="blue")
         
-        # 2. USD/KRW 역사적 환율 (빨간색) 
+        # 2. USD/KRW 역사적 환율 (빨간색)  
         ax_krw.plot(df_combined.index, df_combined["FX_KRW_Price"], label="USD/KRW Historical Exchange Rate (FX Market)", color="red")
         
-        # 이전의 주황색 점선, 녹색 점선 관련 코드 삭제
-
         ax_krw.set_title("USDT/KRW vs USD/KRW Price Over 100 Days")
         ax_krw.set_xlabel("Date")
         ax_krw.set_ylabel("Price (KRW)")
