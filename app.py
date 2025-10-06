@@ -355,15 +355,10 @@ if show_market_cap_chart:
     cg = CoinGeckoAPI()
 
     try:
-        # Canvas 상단의 '조회 시작일'과 '조회 종료일' 사용
-        # datetime.date 객체를 datetime.datetime 객체로 변환
-        start_datetime_btc_dom = datetime.datetime.combine(start_date, datetime.datetime.min.time())
-        end_datetime_btc_dom = datetime.datetime.combine(end_date, datetime.datetime.max.time())
-        
-        # 조회 종료일이 미래인 경우 현재 날짜로 변경 (BTC 가격 트렌드 섹션에서 이미 처리됨)
-        if end_datetime_btc_dom > datetime.datetime.now():
-            end_datetime_btc_dom = datetime.datetime.now()
-            
+        # 강제로 현재 시점 기준으로 365일 전부터 데이터 설정
+        end_date = datetime.datetime.now()
+        start_date = end_date - datetime.timedelta(days=365)
+
         # 상위 암호화폐 시가총액 가져오기 (최신 데이터)
         top_coins = cg.get_coins_markets(vs_currency='usd', order='market_cap_desc', per_page=100, page=1)
         if not top_coins:
@@ -412,52 +407,36 @@ if show_market_cap_chart:
         ax.set_title('Market Cap Distribution(Now)', fontsize=title_font_size)
         st.pyplot(fig)
 
-        # BTC 도미넌스 데이터 가져오기 (사용자 지정 기간 적용)
-        start_timestamp = int(start_datetime_btc_dom.timestamp())
-        end_timestamp = int(end_datetime_btc_dom.timestamp())
-        
-        # CoinGecko API는 'days' 파라미터 대신 'from_timestamp'와 'to_timestamp'를 사용합니다.
-        # 그러나 CoinGecko의 get_coin_market_chart_range_by_id는 market_caps(시가총액)이 아닌 prices(가격)와 total_volumes만 반환하며
-        # 도미넌스 데이터 자체를 직접 제공하지 않습니다.
-        # 기존 코드는 market_caps를 가져와서 글로벌 시가총액으로 나눴는데, 이는 CoinGecko API의 잘못된 사용 방식입니다.
-        # CoinGecko API에는 직접적인 BTC Dominance 히스토리 데이터가 없습니다.
-        # 대신, CoinGecko에서 Bitcoin의 시가총액 데이터를 가져온 후, 이를 사용하여 "도미넌스"를 계산하는 방식이 필요합니다.
-        
-        # 여기서는 Bitcoin의 시가총액 데이터(market_caps)를 가져와서 사용자가 선택한 기간에 맞춥니다.
-        # CoinGecko의 market_chart_range는 market_caps를 제공합니다.
-        btc_market_data = cg.get_coin_market_chart_range_by_id(
+        # 365일 전부터 현재까지 BTC 도미넌스 데이터 가져오기
+        start_timestamp = int(start_date.timestamp())
+        end_timestamp = int(end_date.timestamp())
+        btc_dominance_data = cg.get_coin_market_chart_range_by_id(
             id='bitcoin',
             vs_currency='usd',
             from_timestamp=start_timestamp,
             to_timestamp=end_timestamp
         )
 
-        # 날짜와 시가총액 데이터 추출 (시간 단위에서 일 단위로 변환이 필요할 수 있으나, 여기서는 CoinGecko가 적절한 간격으로 제공한다고 가정)
-        dominance_dates = [datetime.datetime.fromtimestamp(data[0] / 1000).date() for data in btc_market_data['market_caps']]
-        btc_market_caps_hist = [data[1] for data in btc_market_data['market_caps']]
-
-        # NOTE: 정확한 BTC Dominance 추이를 그리려면, 매일의 글로벌 시가총액 데이터도 필요합니다.
-        # CoinGecko는 해당 기간 동안의 글로벌 시가총액 히스토리를 제공하지 않으므로,
-        # 이 그래프는 "BTC 시가총액 비율" 섹션의 최신 Global Market Cap을 사용하여 과거 도미넌스를 *추정*하는 방식으로 유지합니다.
-        # (이것이 가장 현실적인 대체 방법입니다.)
-        
+        # 도미넌스 데이터 처리
+        dominance_dates = [datetime.datetime.fromtimestamp(price[0] / 1000) for price in btc_dominance_data['market_caps']]
         dominance_values = [
-             (cap / global_market_cap) * 100 if global_market_cap > 0 else 0
-             for cap in btc_market_caps_hist
+            (price[1] / global_market_cap) * 100 if global_market_cap > 0 else 0
+            for price in btc_dominance_data['market_caps']
         ]
 
-        # 데이터프레임 생성 및 필터링
-        df_dominance = pd.DataFrame({'Date': dominance_dates, 'BTC Dominance (%)': dominance_values})
-        df_dominance.set_index('Date', inplace=True)
+        # 강제 기간: 365일 전부터 현재 날짜까지
+        end_date = datetime.datetime.now()
+        start_date = end_date - datetime.timedelta(days=365)
         
-        # 사용자가 선택한 기간에 맞춰 필터링 (CoinGecko API가 타임스탬프로 필터링했지만, 날짜 경계 정확도를 위해 한 번 더 필터링)
-        df_dominance = df_dominance.loc[(df_dominance.index >= start_date) & (df_dominance.index <= end_date)]
+        # 날짜를 문자열로 포맷
+        start_date_str = start_date.strftime("%Y-%m-%d")
+        end_date_str = end_date.strftime("%Y-%m-%d")
 
-
+        
         # 꺾은선 그래프 생성
         fig, ax = plt.subplots(figsize=(10, 5))
-        ax.plot(df_dominance.index, df_dominance["BTC Dominance (%)"], label="BTC Dominance (%) (Estimated)", color="green")  # 녹색 꺾은선 그래프
-        ax.set_title(f"BTC Dominance Over Time ({start_date} to {end_date})", fontsize=title_font_size)
+        ax.plot(dominance_dates, dominance_values, label="BTC Dominance (%)", color="green")  # 녹색 꺾은선 그래프
+        ax.set_title(f"BTC Dominance Over Time ({start_date_str} to {end_date_str})", fontsize=title_font_size)
         ax.set_xlabel("Date", fontsize=axis_font_size)
         ax.set_ylabel("BTC Dominance (%)", fontsize=axis_font_size)
         ax.set_ylim(0, 100)  # Y축 범위 0% ~ 100%
