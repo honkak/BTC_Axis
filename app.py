@@ -14,20 +14,6 @@ import requests
 import ccxt
 import matplotlib.ticker as ticker
 
-# from matplotlib import font_manager
-
-# # 한글 폰트 설정 (폰트 이름으로 설정)
-# def set_korean_font():
-#     try:
-#         # '맑은 고딕' 또는 '나눔고딕' 중 하나를 선택
-#         # matplotlib.rc('font', family='Malgun Gothic')  # Windows 기본 한글 폰트
-#         # matplotlib.rc('font', family='NanumGothic')  # 나눔고딕 사용 시 주석 해제
-#         plt.rcParams['axes.unicode_minus'] = False  # 마이너스 기호 깨짐 방지
-#     except Exception as e:
-#         print(f"폰트 설정 실패: {e}")
-
-# set_korean_font()
-
 # 서비스 제목 입력
 st.markdown("<h2 style='font-size: 30px; text-align: center;'>다빈치 BITCOIN 분석 서비스</h2>", unsafe_allow_html=True)
 
@@ -330,29 +316,7 @@ for i in range(0, len(coins), 3):
 
 df_coins = pd.DataFrame(data, columns=columns)
 
-# 주식/ETF 데이터 구성
-stocks = [
-    ("S&P500", "SPY", "애플", "AAPL", "KODEX 200", "069500"),
-    ("나스닥100", "QQQ", "마이크로소프트", "MSFT", "KODEX 코스닥150", "229200"),
-    ("다우존스", "DIA", "아마존", "AMZN", "삼성전자", "005930"),
-    ("러셀2000", "IWM", "엔비디아", "NVDA", "SK하이닉스", "000660"),
-    ("한국", "EWY", "알파벳A", "GOOGL", "LG에너지솔루션", "373220"),
-    ("중국", "FXI", "메타", "META", "삼성바이오로직스", "207940"),
-    ("일본", "EWJ", "테슬라", "TSLA", "현대차", "005380"),
-    ("베트남", "VNM", "버크셔헤서웨이", "BRK.B", "셀트리온", "068270"),
-    ("인도", "INDA", "유나이티드헬스", "UNH", "기아", "000270"),
-    ("러시아", "RSX", "존슨앤존슨", "JNJ", "알테오젠", "196170"),
-    ("브라질", "EWZ", "", "", "에코프로비엠", "247540"),
-    ("금", "GLD", "", "", "에코프로", "086520"),
-    ("은", "SLV", "", "", "", ""),
-    ("원유", "USO", "", "", "", ""),
-    ("천연가스", "UNG", "", "", "", ""),
-    ("농산물", "DBA", "", "", "", ""),
-]
-columns_etf = ["미국ETF", "코드명1", "미국주식", "코드명2", "한국주식", "코드명3"]
-df_etf = pd.DataFrame(stocks, columns=columns_etf)
-
-# 스타일링 함수 정의 (수정된 부분)
+# 스타일링 함수 정의
 def highlight_columns(x):
     # 기본 스타일: 텍스트 색상을 지정하지 않아 Streamlit 테마에 따르게 함 (다크모드=흰색, 라이트모드=검은색)
     style = pd.DataFrame("", index=x.index, columns=x.columns)
@@ -365,29 +329,17 @@ def highlight_columns(x):
 # 상태 초기화
 if "show_coins" not in st.session_state:
     st.session_state.show_coins = False
-if "show_etf" not in st.session_state:
-    st.session_state.show_etf = False
 
 # 버튼 배치
-col_button1, col_button2 = st.columns([1, 1])
+col_button1 = st.columns([1])[0] # 버튼을 가운데 정렬하기 위해 1열 컬럼만 사용
 with col_button1:
     if st.button("코인 리스트"):
         st.session_state.show_coins = not st.session_state.show_coins
-        st.session_state.show_etf = False  # 다른 버튼 상태 초기화
-with col_button2:
-    # 주석만 해제하면 버튼 바로 나타남
-    if st.button("주식/ETF 리스트"):
-        st.session_state.show_etf = not st.session_state.show_etf
-        st.session_state.show_coins = False  # 다른 버튼 상태 초기화
 
 # 데이터프레임 표시
 if st.session_state.show_coins:
     # st.markdown("### 코인 리스트")
     st.dataframe(df_coins.style.apply(highlight_columns, axis=None), use_container_width=True)
-
-if st.session_state.show_etf:
-    # st.markdown("### 주식/ETF 리스트")
-    st.dataframe(df_etf.style.apply(highlight_columns, axis=None), use_container_width=True)
 
 
 ######################################
@@ -611,7 +563,7 @@ if show_kimchi_premium:
 st.markdown("---")
 
 #####################################
-# 'USDT 1달러 추종 확인' 기능 구현
+# 'USDT 가격변화' 기능 구현
         
 # CoinGecko에서 USDT/USD 데이터를 가져오는 함수 (100일)
 @st.cache_data(ttl=3600)  # 데이터를 1시간 동안 캐싱
@@ -630,7 +582,6 @@ def fetch_usdt_prices():
 # 환율 데이터를 가져오는 함수 (USD -> KRW)
 @st.cache_data(ttl=3600)  # 데이터를 1시간 동안 캐싱
 def fetch_usd_to_krw_rate():
-    # CoinGecko에서 BTC/USDT 및 BTC/KRW 데이터를 가져와서 간접적으로 환율을 계산하는 방식 사용
     # Open Exchange Rate API를 사용하기 위해 URL 수정
     url = "https://api.exchangerate-api.com/v4/latest/USD"
     response = requests.get(url)
@@ -650,8 +601,8 @@ def fetch_usdt_krw_upbit():
     data.reverse()
     return [{"date": item["candle_date_time_utc"], "price": item["trade_price"]} for item in data]
 
-# 'USDT 1달러 추종 확인' 체크박스 추가
-show_usdt_chart = st.checkbox("USDT 1달러 추종 확인")
+# 'USDT 가격변화' 체크박스 추가 (이름 변경)
+show_usdt_chart = st.checkbox("USDT 가격변화")
 
 if show_usdt_chart:
     try:
@@ -675,19 +626,7 @@ if show_usdt_chart:
         df_combined = df_usdt_usd.merge(df_usdt_krw, left_index=True, right_index=True, how='inner')
         df_combined["price_usd_krw_converted"] = df_combined["price"] * usd_to_krw_rate
 
-        # USD 기준 차트 생성
-        st.write("100일 동안의 USDT 가격 변화 (USD 기준)")
-        fig_usd, ax_usd = plt.subplots(figsize=(10, 6))
-        ax_usd.plot(df_combined.index, df_combined["price"], label="USDT/USD Price")
-        ax_usd.axhline(y=1.0, color="red", linestyle="--", label="Target Price ($1)")
-        ax_usd.set_title("USDT/USD Price Over 100 Days")
-        ax_usd.set_xlabel("Date")
-        ax_usd.set_ylabel("Price (USD)")
-        ax_usd.legend()
-        ax_usd.grid()
-        plt.xticks(rotation=45)
-        st.pyplot(fig_usd)
-
+        
         # KRW 기준 차트 생성
         st.write("100일 동안의 USDT 가격 변화 (KRW 기준)")
         fig_krw, ax_krw = plt.subplots(figsize=(10, 6))
