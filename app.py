@@ -394,8 +394,6 @@ if show_market_cap_chart:
         global_gold_market_cap = 15800000000000
         gold_asset_name = "Global Physical Gold Market Cap (Fixed Estimate)"
         
-        st.info(f"Gold comparison is using the hardcoded estimate: {global_gold_market_cap:,} USD.")
-        
         # BTC 시가총액 vs. 금 시가총액 비율 계산
         btc_vs_gold_ratio = (btc_market_cap / global_gold_market_cap) * 100
 
