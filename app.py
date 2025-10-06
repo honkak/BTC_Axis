@@ -18,13 +18,13 @@ import matplotlib.ticker as ticker
 
 # # 한글 폰트 설정 (폰트 이름으로 설정)
 # def set_korean_font():
-#     try:
-#         # '맑은 고딕' 또는 '나눔고딕' 중 하나를 선택
-#         # matplotlib.rc('font', family='Malgun Gothic')  # Windows 기본 한글 폰트
-#         matplotlib.rc('font', family='NanumGothic')  # 나눔고딕 사용 시 주석 해제
-#         plt.rcParams['axes.unicode_minus'] = False  # 마이너스 기호 깨짐 방지
-#     except Exception as e:
-#         print(f"폰트 설정 실패: {e}")
+#     try:
+#         # '맑은 고딕' 또는 '나눔고딕' 중 하나를 선택
+#         # matplotlib.rc('font', family='Malgun Gothic')  # Windows 기본 한글 폰트
+#         # matplotlib.rc('font', family='NanumGothic')  # 나눔고딕 사용 시 주석 해제
+#         plt.rcParams['axes.unicode_minus'] = False  # 마이너스 기호 깨짐 방지
+#     except Exception as e:
+#         print(f"폰트 설정 실패: {e}")
 
 # set_korean_font()
 
@@ -126,13 +126,13 @@ if show_btc_price_chart:
                 st.write(f"BTC Price in KRW: {start_date} to {end_date}")
                 fig, ax = plt.subplots(figsize=(10, 5))
                 ax.plot(df.index, df["close"], label="BTC Price (KRW)", color="green")
-            
+                
                 # 세로축을 100M 단위로 변환
                 def format_krw(value, tick_number):
                     return f"{value / 1e8:.1f} 100M"  # 100M 단위로 변환
-            
+                
                 ax.yaxis.set_major_formatter(ticker.FuncFormatter(format_krw))
-            
+                
                 ax.set_title("Bitcoin Price in KRW (Upbit)", fontsize=16)
                 ax.set_xlabel("Date", fontsize=12)
                 ax.set_ylabel("Price (100M KRW)", fontsize=12)  # 세로축 단위 표시 변경
@@ -141,28 +141,28 @@ if show_btc_price_chart:
                 plt.xticks(rotation=45)
                 st.pyplot(fig)
 
-                        
-            # 1천만 원 투자 결과 계산
-            if start_price and end_price:
-                st.markdown("<h2 style='font-size: 20px;'>1천만 원을 투자했다면,</h2>", unsafe_allow_html=True)
+                
+                # 1천만 원 투자 결과 계산
+                if start_price and end_price:
+                    st.markdown("<h2 style='font-size: 20px;'>1천만 원을 투자했다면,</h2>", unsafe_allow_html=True)
 
-                # 초기 투자금액
-                initial_investment = 10000000  # 1천만 원
+                    # 초기 투자금액
+                    initial_investment = 10000000  # 1천만 원
 
-                # 수익률 계산
-                return_percentage = ((end_price - start_price) / start_price) * 100
-                profit_amount = (return_percentage / 100) * initial_investment
-                total_amount = initial_investment + profit_amount
+                    # 수익률 계산
+                    return_percentage = ((end_price - start_price) / start_price) * 100
+                    profit_amount = (return_percentage / 100) * initial_investment
+                    total_amount = initial_investment + profit_amount
 
-                # 수익률 색상 결정
-                color = 'red' if return_percentage >= 0 else 'blue'
+                    # 수익률 색상 결정
+                    color = 'red' if return_percentage >= 0 else 'blue'
 
-                # 결과 출력
-                st.markdown(
-                    f"BTC에 1천만 원을 투자했더라면, 현재 {total_amount:,.0f} 원이 되었을 것입니다. "
-                    f"(<span style='color: {color};'>수익률: {return_percentage:.2f}%</span>)",
-                    unsafe_allow_html=True,
-                )
+                    # 결과 출력
+                    st.markdown(
+                        f"BTC에 1천만 원을 투자했더라면, 현재 {total_amount:,.0f} 원이 되었을 것입니다. "
+                        f"(<span style='color: {color};'>수익률: {return_percentage:.2f}%</span>)",
+                        unsafe_allow_html=True,
+                    )
 
     except Exception as e:
         st.error(f"비트코인 데이터를 가져오는 중 오류가 발생했습니다: {e}")
@@ -252,7 +252,7 @@ if fixed_ratio:
             df = df.loc[start_datetime:end_datetime]
             ohlcv_data["USD/BTC"] = 1 / df["close"]
         except Exception as e:
-            st.warning("USD/BTC 데이터를 가져오는 중 문제가 발생했습니다: {e}")
+            st.warning(f"USD/BTC 데이터를 가져오는 중 문제가 발생했습니다: {e}")
 
     if add_krw:
         try:
@@ -263,7 +263,7 @@ if fixed_ratio:
             df = df.loc[start_datetime:end_datetime]
             ohlcv_data["KRW/BTC"] = 1 / df["close"]
         except Exception as e:
-            st.warning("KRW/BTC 데이터를 가져오는 중 문제가 발생했습니다: {e}")
+            st.warning(f"KRW/BTC 데이터를 가져오는 중 문제가 발생했습니다: {e}")
 
     # 최종 차트 생성
     if ohlcv_data:
@@ -352,10 +352,14 @@ stocks = [
 columns_etf = ["미국ETF", "코드명1", "미국주식", "코드명2", "한국주식", "코드명3"]
 df_etf = pd.DataFrame(stocks, columns=columns_etf)
 
-# 스타일링 함수 정의
+# 스타일링 함수 정의 (수정된 부분)
 def highlight_columns(x):
+    # 기본 스타일: 텍스트 색상을 지정하지 않아 Streamlit 테마에 따르게 함 (다크모드=흰색, 라이트모드=검은색)
     style = pd.DataFrame("", index=x.index, columns=x.columns)
-    style.iloc[:, [0, 2, 4]] = "background-color: lightgrey;"  # 1, 3, 5열 회색
+    
+    # 1, 3, 5열 (이름 열)에 회색 배경과 검은색 텍스트 적용 (다크모드 가시성 확보)
+    style.iloc[:, [0, 2, 4]] = "background-color: lightgrey; color: black;"
+    
     return style
 
 # 상태 초기화
@@ -370,10 +374,11 @@ with col_button1:
     if st.button("코인 리스트"):
         st.session_state.show_coins = not st.session_state.show_coins
         st.session_state.show_etf = False  # 다른 버튼 상태 초기화
-# with col_button2:         #주석만 해제하면 버튼 바로 나타남
-#     if st.button("주식/ETF 리스트"):
-#         st.session_state.show_etf = not st.session_state.show_etf
-#         st.session_state.show_coins = False  # 다른 버튼 상태 초기화
+with col_button2:
+    # 주석만 해제하면 버튼 바로 나타남
+    if st.button("주식/ETF 리스트"):
+        st.session_state.show_etf = not st.session_state.show_etf
+        st.session_state.show_coins = False  # 다른 버튼 상태 초기화
 
 # 데이터프레임 표시
 if st.session_state.show_coins:
@@ -554,8 +559,9 @@ if show_kimchi_premium:
             cg_df["Date"] = pd.to_datetime(cg_df["timestamp"], unit="ms")
             cg_df.set_index("Date", inplace=True)
 
-            # 환율 적용
+            # 환율 적용 (현재 환율 사용)
             exchange_rate = get_exchange_rate()
+            # 코인게코 USD 가격을 현재 환율로 KRW로 변환
             cg_df["Close (KRW)"] = cg_df["price_usd"] * exchange_rate
 
             # 김치프리미엄 계산
@@ -563,6 +569,10 @@ if show_kimchi_premium:
                 "Upbit (KRW)": upbit_df["close"],
                 "CoinGecko (KRW)": cg_df["Close (KRW)"]
             })
+            # 날짜를 기준으로 병합(join) 수행
+            df = df.dropna()
+            
+            # 김프 계산
             df["Kimchi Premium (%)"] = (df["Upbit (KRW)"] - df["CoinGecko (KRW)"]) / df["CoinGecko (KRW)"] * 100
             return df
 
@@ -601,7 +611,7 @@ if show_kimchi_premium:
 st.markdown("---")
 
 #####################################
-# # 'USDT 1달러 추종 확인' 기능 구현
+# 'USDT 1달러 추종 확인' 기능 구현
         
 # CoinGecko에서 USDT/USD 데이터를 가져오는 함수 (100일)
 @st.cache_data(ttl=3600)  # 데이터를 1시간 동안 캐싱
@@ -620,7 +630,9 @@ def fetch_usdt_prices():
 # 환율 데이터를 가져오는 함수 (USD -> KRW)
 @st.cache_data(ttl=3600)  # 데이터를 1시간 동안 캐싱
 def fetch_usd_to_krw_rate():
-    url = "https://api.exchangerate-api.com/v4/latest/USD"  # 예시 환율 API
+    # CoinGecko에서 BTC/USDT 및 BTC/KRW 데이터를 가져와서 간접적으로 환율을 계산하는 방식 사용
+    # Open Exchange Rate API를 사용하기 위해 URL 수정
+    url = "https://api.exchangerate-api.com/v4/latest/USD"
     response = requests.get(url)
     response.raise_for_status()
     data = response.json()
@@ -634,6 +646,8 @@ def fetch_usdt_krw_upbit():
     response = requests.get(url, params=params)
     response.raise_for_status()
     data = response.json()
+    # 최신 데이터가 맨 뒤로 오도록 순서를 뒤집음
+    data.reverse()
     return [{"date": item["candle_date_time_utc"], "price": item["trade_price"]} for item in data]
 
 # 'USDT 1달러 추종 확인' 체크박스 추가
@@ -644,8 +658,8 @@ if show_usdt_chart:
         # CoinGecko에서 USDT/USD 데이터 가져오기
         prices_usdt_usd = fetch_usdt_prices()
         df_usdt_usd = pd.DataFrame(prices_usdt_usd, columns=["timestamp", "price"])
-        df_usdt_usd["date"] = pd.to_datetime(df_usdt_usd["timestamp"], unit="ms")
-        df_usdt_usd = df_usdt_usd[["date", "price"]]
+        df_usdt_usd["date"] = pd.to_datetime(df_usdt_usd["timestamp"], unit="ms").dt.normalize()
+        df_usdt_usd = df_usdt_usd[["date", "price"]].set_index("date")
 
         # USD to KRW 환율 가져오기
         usd_to_krw_rate = fetch_usd_to_krw_rate()
@@ -653,131 +667,63 @@ if show_usdt_chart:
         # 업비트에서 USDT/KRW 데이터 가져오기
         usdt_krw_data = fetch_usdt_krw_upbit()
         df_usdt_krw = pd.DataFrame(usdt_krw_data)
-        df_usdt_krw["date"] = pd.to_datetime(df_usdt_krw["date"])
+        df_usdt_krw["date"] = pd.to_datetime(df_usdt_krw["date"]).dt.normalize()
         df_usdt_krw.rename(columns={"price": "price_krw"}, inplace=True)
+        df_usdt_krw = df_usdt_krw.set_index("date")
+
+        # 데이터 병합 (날짜를 기준으로)
+        df_combined = df_usdt_usd.merge(df_usdt_krw, left_index=True, right_index=True, how='inner')
+        df_combined["price_usd_krw_converted"] = df_combined["price"] * usd_to_krw_rate
 
         # USD 기준 차트 생성
         st.write("100일 동안의 USDT 가격 변화 (USD 기준)")
         fig_usd, ax_usd = plt.subplots(figsize=(10, 6))
-        ax_usd.plot(df_usdt_usd["date"], df_usdt_usd["price"], label="USDT/USD Price")
+        ax_usd.plot(df_combined.index, df_combined["price"], label="USDT/USD Price")
         ax_usd.axhline(y=1.0, color="red", linestyle="--", label="Target Price ($1)")
-        ax_usd.set_title("USDT/USD Price Over 10 Days")
+        ax_usd.set_title("USDT/USD Price Over 100 Days")
         ax_usd.set_xlabel("Date")
         ax_usd.set_ylabel("Price (USD)")
         ax_usd.legend()
         ax_usd.grid()
+        plt.xticks(rotation=45)
         st.pyplot(fig_usd)
 
         # KRW 기준 차트 생성
-        df_usdt_usd["price_krw"] = df_usdt_usd["price"] * usd_to_krw_rate
         st.write("100일 동안의 USDT 가격 변화 (KRW 기준)")
         fig_krw, ax_krw = plt.subplots(figsize=(10, 6))
-        ax_krw.plot(df_usdt_krw["date"], df_usdt_krw["price_krw"], label="USDT/KRW Price (Upbit)", color="blue")
-        ax_krw.plot(df_usdt_usd["date"], df_usdt_usd["price_krw"], label=f"USDT/USD Price x {usd_to_krw_rate:.0f} (Exchange Rate)", color="orange")
-        ax_krw.axhline(y=usd_to_krw_rate, color="green", linestyle="--", label=f"Target Price ({usd_to_krw_rate:.0f} KRW)")
-        ax_krw.set_title("USDT/KRW Price Over 10 Days")
+        
+        # 업비트 KRW 가격
+        ax_krw.plot(df_combined.index, df_combined["price_krw"], label="USDT/KRW Price (Upbit)", color="blue")
+        # CoinGecko USD 가격에 현재 환율을 곱하여 KRW로 변환한 값
+        ax_krw.plot(df_combined.index, df_combined["price_usd_krw_converted"], label=f"USDT/USD Price x {usd_to_krw_rate:,.0f} (Exchange Rate)", color="orange")
+        
+        ax_krw.axhline(y=usd_to_krw_rate, color="green", linestyle="--", label=f"Target Price ({usd_to_krw_rate:,.0f} KRW)")
+        ax_krw.set_title("USDT/KRW Price Over 100 Days")
         ax_krw.set_xlabel("Date")
         ax_krw.set_ylabel("Price (KRW)")
         ax_krw.legend()
         ax_krw.grid()
+        plt.xticks(rotation=45)
         st.pyplot(fig_krw)
 
+        # 현재 가격 차이 출력
+        latest_upbit_krw = df_combined["price_krw"].iloc[-1]
+        latest_usd_converted = df_combined["price_usd_krw_converted"].iloc[-1]
+        
+        premium_krw = latest_upbit_krw - latest_usd_converted
+        premium_percent = (premium_krw / latest_usd_converted) * 100
+        
+        st.markdown(
+            f"""
+            <p style='font-size: 16px;'>
+                <strong>[최신 데이터]</strong><br>
+                업비트 USDT/KRW 가격: {latest_upbit_krw:,.2f} KRW<br>
+                해외(USD) 환산 USDT/KRW 가격: {latest_usd_converted:,.2f} KRW<br>
+                <span style='color: {'red' if premium_percent >= 0 else 'blue'};'>KRW 프리미엄: {premium_percent:.2f}%</span>
+            </p>
+            """,
+            unsafe_allow_html=True
+        )
+
     except Exception as e:
-        st.error(f"데이터를 가져오는 중 오류가 발생했습니다: {e}")
-
-###################################
-
-
-# # 서울아파트/BTC 계산 추가
-# if add_apartment:
-#     try:
-#         # 서울아파트 지수 데이터
-#         seoul_index_data = [
-#             {"Date": "2017-10-24", "Index": 63.96632508},
-#             {"Date": "2017-11-06", "Index": 64.35617101},
-#             {"Date": "2017-12-04", "Index": 64.77498989},
-#             {"Date": "2018-01-08", "Index": 65.41912996},
-#             {"Date": "2018-02-05", "Index": 66.2597843},
-#             {"Date": "2018-03-05", "Index": 66.93667665},
-#             {"Date": "2018-04-02", "Index": 67.47642572},
-#             {"Date": "2018-05-07", "Index": 67.84365247},
-#             {"Date": "2018-06-04", "Index": 68.11497207},
-#             {"Date": "2018-07-02", "Index": 68.35189802},
-#             {"Date": "2018-08-06", "Index": 69.02103449},
-#             {"Date": "2018-09-03", "Index": 71.13697588},
-#             {"Date": "2018-10-01", "Index": 72.84264443},
-#             {"Date": "2018-11-05", "Index": 73.54980454},
-#             {"Date": "2018-12-03", "Index": 73.67782493},
-#             {"Date": "2019-01-07", "Index": 73.66912294},
-#             {"Date": "2019-02-11", "Index": 73.59136754},
-#             {"Date": "2019-03-04", "Index": 73.49940939},
-#             {"Date": "2019-04-01", "Index": 73.39241574},
-#             {"Date": "2019-05-06", "Index": 73.32529968},
-#             {"Date": "2019-06-03", "Index": 73.26978658},
-#             {"Date": "2019-07-01", "Index": 73.37458253},
-#             {"Date": "2019-08-05", "Index": 73.75976369},
-#             {"Date": "2019-09-02", "Index": 74.08254476},
-#             {"Date": "2019-10-07", "Index": 74.47874155},
-#             {"Date": "2019-11-04", "Index": 74.90851283},
-#             {"Date": "2019-12-02", "Index": 75.47541603},
-#             {"Date": "2020-01-06", "Index": 76.19737372},
-#             {"Date": "2020-02-03", "Index": 76.60351907},
-#             {"Date": "2020-03-02", "Index": 77.06895445},
-#             {"Date": "2020-04-06", "Index": 77.37230334},
-#             {"Date": "2020-05-04", "Index": 77.38681535},
-#             {"Date": "2020-06-01", "Index": 77.51479519},
-#             {"Date": "2020-07-06", "Index": 78.95412896},
-#             {"Date": "2020-08-03", "Index": 80.653417},
-#             {"Date": "2020-09-07", "Index": 82.39792622},
-#             {"Date": "2020-10-05", "Index": 83.13274188},
-#             {"Date": "2020-11-02", "Index": 84.10555158},
-#             {"Date": "2020-12-07", "Index": 85.40882464},
-#             {"Date": "2021-01-04", "Index": 86.76133041},
-#             {"Date": "2021-02-01", "Index": 88.10642651},
-#             {"Date": "2021-03-01", "Index": 89.11993105},
-#             {"Date": "2021-04-05", "Index": 90.31594141},
-#             {"Date": "2021-05-03", "Index": 91.16407164},
-#             {"Date": "2021-06-07", "Index": 92.63092873},
-#             {"Date": "2021-07-05", "Index": 93.87841052},
-#             {"Date": "2021-08-02", "Index": 94.94816887},
-#             {"Date": "2021-09-06", "Index": 96.8861344},
-#             {"Date": "2021-10-04", "Index": 97.95971642},
-#             {"Date": "2021-11-01", "Index": 98.96926013},
-#             {"Date": "2021-12-06", "Index": 99.69961851},
-#             {"Date": "2022-01-03", "Index": 99.96762216},
-#             {"Date": "2022-02-07", "Index": 100.0799603},
-#             {"Date": "2022-03-07", "Index": 100.132464},
-#             {"Date": "2022-04-04", "Index": 100.2198642},
-#             {"Date": "2022-05-02", "Index": 100.3939195},
-#             {"Date": "2022-06-06", "Index": 100.5870124},
-#             {"Date": "2022-07-04", "Index": 100.6340279},
-#             {"Date": "2022-08-01", "Index": 100.5714529},
-#             {"Date": "2022-09-05", "Index": 100.2972065},
-#             {"Date": "2022-10-03", "Index": 99.74424024},
-#             {"Date": "2022-11-07", "Index": 98.57558449},
-#             {"Date": "2022-12-05", "Index": 97.15531781},
-#             {"Date": "2023-01-02", "Index": 95.66834187},
-#             {"Date": "2023-02-06", "Index": 93.9327978},
-#             {"Date": "2023-03-06", "Index": 92.81969614},
-#             {"Date": "2023-04-03", "Index": 91.83450042},
-#             {"Date": "2023-05-01", "Index": 91.11835052},
-#             {"Date": "2023-06-05", "Index": 90.66957687},
-#             {"Date": "2023-07-03", "Index": 90.46279702},
-#             {"Date": "2023-08-07", "Index": 90.30724893},
-#             {"Date": "2023-09-04", "Index": 90.51120829},
-#             {"Date": "2023-10-09", "Index": 90.73258825},
-#             {"Date": "2023-11-06", "Index": 90.83250941},
-#             {"Date": "2023-12-04", "Index": 90.76284859},
-#             {"Date": "2024-01-08", "Index": 90.59004917},
-#             {"Date": "2024-02-05", "Index": 90.4420433},
-#             {"Date": "2024-03-04", "Index": 90.33997655},
-#             {"Date": "2024-04-01", "Index": 90.18279244},
-#             {"Date": "2024-05-06", "Index": 90.13373237},
-#             {"Date": "2024-06-03", "Index": 90.18959413},
-#             {"Date": "2024-07-01", "Index": 90.48698013},
-#             {"Date": "2024-08-05", "Index": 91.31906652},
-#             {"Date": "2024-09-02", "Index": 92.20839652},
-#             {"Date": "2024-10-07", "Index": 92.7004616},
-#             {"Date": "2024-11-04", "Index": 93.02716714}
-#         ]
-
+        st.error(f"USDT 데이터를 가져오는 중 오류가 발생했습니다: {e}")
