@@ -3,11 +3,8 @@
 ##############################################
 
 import streamlit as st
-import FinanceDataReader as fdr
 import datetime
 import pandas as pd
-import yfinance as yf
-import streamlit_analytics
 from pycoingecko import CoinGeckoAPI
 import matplotlib.pyplot as plt
 import requests
@@ -462,6 +459,7 @@ st.markdown("---")
 show_kimchi_premium = st.checkbox("김치프리미엄 보기")
 
 # USDT 가격 데이터를 가져오는 함수
+@st.cache_data(ttl=3600)  # 데이터를 1시간 동안 캐싱
 def fetch_usdt_prices():
     url = "https://api.coingecko.com/api/v3/coins/tether/market_chart"
     params = {
@@ -490,11 +488,11 @@ if show_kimchi_premium:
             cg = CoinGeckoAPI()
 
             # 최근 100일 기준으로 설정
-            end_date = datetime.datetime.now()
-            start_date = end_date - datetime.timedelta(days=100)
+            end_date_hist = datetime.datetime.now()
+            start_date_hist = end_date_hist - datetime.timedelta(days=100)
 
             # 업비트 데이터 가져오기
-            since = int(start_date.timestamp() * 1000)
+            since = int(start_date_hist.timestamp() * 1000)
             upbit_data = upbit.fetch_ohlcv("BTC/KRW", timeframe="1d", since=since)
             upbit_df = pd.DataFrame(upbit_data, columns=["timestamp", "open", "high", "low", "close", "volume"])
             upbit_df["Date"] = pd.to_datetime(upbit_df["timestamp"], unit="ms")
@@ -504,8 +502,8 @@ if show_kimchi_premium:
             btc_market_data = cg.get_coin_market_chart_range_by_id(
                 id="bitcoin",
                 vs_currency="usd",
-                from_timestamp=int(start_date.timestamp()),
-                to_timestamp=int(end_date.timestamp())
+                from_timestamp=int(start_date_hist.timestamp()),
+                to_timestamp=int(end_date_hist.timestamp())
             )
             cg_df = pd.DataFrame(btc_market_data["prices"], columns=["timestamp", "price_usd"])
             cg_df["Date"] = pd.to_datetime(cg_df["timestamp"], unit="ms")
@@ -567,7 +565,7 @@ st.markdown("---")
         
 # CoinGecko에서 USDT/USD 데이터를 가져오는 함수 (100일)
 @st.cache_data(ttl=3600)  # 데이터를 1시간 동안 캐싱
-def fetch_usdt_prices():
+def fetch_usdt_prices_for_comparison():
     url = "https://api.coingecko.com/api/v3/coins/tether/market_chart"
     params = {
         "vs_currency": "usd",
@@ -601,13 +599,13 @@ def fetch_usdt_krw_upbit():
     data.reverse()
     return [{"date": item["candle_date_time_utc"], "price": item["trade_price"]} for item in data]
 
-# 'USDT 가격변화' 체크박스 추가 (이름 변경)
+# 'USDT 가격변화' 체크박스
 show_usdt_chart = st.checkbox("USDT 가격변화")
 
 if show_usdt_chart:
     try:
         # CoinGecko에서 USDT/USD 데이터 가져오기
-        prices_usdt_usd = fetch_usdt_prices()
+        prices_usdt_usd = fetch_usdt_prices_for_comparison()
         df_usdt_usd = pd.DataFrame(prices_usdt_usd, columns=["timestamp", "price"])
         df_usdt_usd["date"] = pd.to_datetime(df_usdt_usd["timestamp"], unit="ms").dt.normalize()
         df_usdt_usd = df_usdt_usd[["date", "price"]].set_index("date")
