@@ -389,27 +389,13 @@ if show_market_cap_chart:
         global_market_cap = top_5_market_cap + others_market_cap
         btc_dominance = (btc_market_cap / global_market_cap) * 100
         
-        # 금(Gold) 시가총액 정의 및 가져오기 (Tether Gold(XAUT)를 Proxy로 사용)
+        # 금(Gold) 시가총액 정의 및 가져오기 (사용자 요청에 따라 고정값으로 하드코딩)
+        # 1. 고정값 설정 (실제 금 시가총액 추정치: 약 $15.8T USD)
+        global_gold_market_cap = 15800000000000
+        gold_asset_name = "Global Physical Gold Market Cap (Fixed Estimate)"
         
-        # 1. Fallback 값 설정 (실제 금 시가총액 추정치: 약 $20T USD)
-        global_gold_market_cap = 20000000000000
-        gold_asset_name = "Global Gold Market Cap (Fallback Estimate)"
+        st.info(f"Gold comparison is using the hardcoded estimate: {global_gold_market_cap:,} USD.")
         
-        try:
-            # 2. CoinGecko API를 사용하여 'tether-gold' (XAUT) 시가총액을 가져옵니다.
-            gold_data = cg.get_coins_markets(vs_currency='usd', ids='tether-gold')
-            
-            if gold_data and 'market_cap' in gold_data[0] and gold_data[0]['market_cap'] is not None:
-                # XAUT의 시가총액을 사용합니다.
-                global_gold_market_cap = gold_data[0]['market_cap']
-                gold_asset_name = f"Tokenized Gold ({gold_data[0]['symbol'].upper()}) Market Cap (Proxy)"
-                st.info(f"Gold comparison is using the market cap of '{gold_data[0]['name']}' as a proxy.")
-            else:
-                st.warning("Tether Gold(XAUT) 시가총액 데이터를 가져오지 못했습니다. 금 시가총액 추정치($20T)를 사용합니다.")
-        except Exception as e:
-            st.warning(f"CoinGecko API 오류 발생 ({e}). 금 시가총액 추정치($20T)를 사용합니다.")
-
-
         # BTC 시가총액 vs. 금 시가총액 비율 계산
         btc_vs_gold_ratio = (btc_market_cap / global_gold_market_cap) * 100
 
@@ -423,7 +409,7 @@ if show_market_cap_chart:
             unsafe_allow_html=True
         )
 
-        # [추가] 글로벌 Gold 시가총액 출력 (가져온 데이터의 이름 사용)
+        # [추가] 글로벌 Gold 시가총액 출력 (고정값의 이름 사용)
         st.write(f"{gold_asset_name} (USD): {int(global_gold_market_cap):,} (USD)")
         
         # [추가] BTC 시가총액 vs Gold 시가총액 비율 붉은색으로 출력 요청 반영
