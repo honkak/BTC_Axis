@@ -3,7 +3,7 @@
 ##############################################
 
 import streamlit as st
-import FinanceDataReader as fdr # <--- FinanceDataReader 재추가
+import FinanceDataReader as fdr
 import datetime
 import pandas as pd
 from pycoingecko import CoinGeckoAPI
@@ -459,7 +459,7 @@ st.markdown("---")
 # '김치프리미엄' 체크박스 추가
 show_kimchi_premium = st.checkbox("김치프리미엄 보기")
 
-# CoinGecko에서 USDT/USD 데이터를 가져오는 함수 (100일) - 함수 이름 변경
+# CoinGecko에서 USDT/USD 데이터를 가져오는 함수 (100일)
 @st.cache_data(ttl=3600)  # 데이터를 1시간 동안 캐싱
 def fetch_usdt_prices_cg():
     url = "https://api.coingecko.com/api/v3/coins/tether/market_chart"
@@ -588,7 +588,6 @@ def fetch_historical_usd_krw_rate():
     start_date = (datetime.datetime.now() - datetime.timedelta(days=100)).strftime("%Y-%m-%d")
     
     # USD/KRW 환율 데이터 가져오기
-    # FinanceDataReader를 사용하여 'USD/KRW' 심볼을 조회
     df_fx = fdr.DataReader('USD/KRW', start=start_date, end=end_date)
     
     # 인덱스 이름 'date'로 정규화 및 날짜만 남기기
@@ -598,15 +597,6 @@ def fetch_historical_usd_krw_rate():
     # 'Close' 컬럼만 사용 (종가)
     return df_fx['Close'].rename('FX_KRW_Price')
 
-
-# 환율 데이터를 가져오는 함수 (USD -> KRW, 현재 환율)
-@st.cache_data(ttl=3600)  # 데이터를 1시간 동안 캐싱
-def fetch_usd_to_krw_rate():
-    url = "https://api.exchangerate-api.com/v4/latest/USD"
-    response = requests.get(url)
-    response.raise_for_status()
-    data = response.json()
-    return data["rates"]["KRW"]
 
 # 업비트에서 USDT/KRW 데이터를 가져오는 함수
 @st.cache_data(ttl=3600)  # 데이터를 1시간 동안 캐싱
@@ -625,14 +615,11 @@ show_usdt_chart = st.checkbox("USDT 가격변화")
 
 if show_usdt_chart:
     try:
-        # CoinGecko에서 USDT/USD 데이터 가져오기
+        # CoinGecko에서 USDT/USD 데이터 가져오기 (데이터는 여전히 필요)
         prices_usdt_usd = fetch_usdt_prices_cg()
         df_usdt_usd = pd.DataFrame(prices_usdt_usd, columns=["timestamp", "price"])
         df_usdt_usd["date"] = pd.to_datetime(df_usdt_usd["timestamp"], unit="ms").dt.normalize()
         df_usdt_usd = df_usdt_usd[["date", "price"]].set_index("date").rename(columns={"price": "USDT_CG_USD_Price"})
-
-        # USD to KRW 환율 (현재 환율, 수평선용)
-        usd_to_krw_latest = fetch_usd_to_krw_rate()
 
         # 업비트에서 USDT/KRW 데이터 가져오기
         usdt_krw_data = fetch_usdt_krw_upbit()
@@ -648,8 +635,8 @@ if show_usdt_chart:
         df_combined = df_usdt_usd.merge(df_usdt_krw, left_index=True, right_index=True, how='inner')
         df_combined = df_combined.merge(df_fx_krw, left_index=True, right_index=True, how='inner')
         
-        # CoinGecko USDT 가격을 역사적 FX 환율로 변환 (참고용)
-        df_combined["USDT_CG_KRW_Converted"] = df_combined["USDT_CG_USD_Price"] * df_combined["FX_KRW_Price"]
+        # 이전의 'USDT_CG_KRW_Converted' 컬럼 계산 코드 삭제
+        # df_combined["USDT_CG_KRW_Converted"] = df_combined["USDT_CG_USD_Price"] * df_combined["FX_KRW_Price"]
 
         
         # KRW 기준 차트 생성
@@ -659,15 +646,11 @@ if show_usdt_chart:
         # 1. 업비트 USDT/KRW 가격 (파란색)
         ax_krw.plot(df_combined.index, df_combined["price_krw"], label="USDT/KRW Price (Upbit)", color="blue")
         
-        # 2. USD/KRW 역사적 환율 (빨간색) <--- 사용자 요청 추가 차트
+        # 2. USD/KRW 역사적 환율 (빨간색) 
         ax_krw.plot(df_combined.index, df_combined["FX_KRW_Price"], label="USD/KRW Historical Exchange Rate (FX Market)", color="red")
         
-        # 3. CoinGecko USDT 환율 변환 (주황색 점선, 보조선)
-        ax_krw.plot(df_combined.index, df_combined["USDT_CG_KRW_Converted"], label="USDT/USD (CG) x FX Rate (Reference)", color="orange", linestyle='--')
-        
-        # 4. 현재 외환 시장 환율 수평선
-        ax_krw.axhline(y=usd_to_krw_latest, color="green", linestyle=":", label=f"Latest FX Rate ({usd_to_krw_latest:,.0f} KRW)")
-        
+        # 이전의 주황색 점선, 녹색 점선 관련 코드 삭제
+
         ax_krw.set_title("USDT/KRW vs USD/KRW Price Over 100 Days")
         ax_krw.set_xlabel("Date")
         ax_krw.set_ylabel("Price (KRW)")
