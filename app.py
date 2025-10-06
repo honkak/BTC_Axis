@@ -403,16 +403,16 @@ if show_market_cap_chart:
         
         # Bitcoin Dominance: 붉은색으로 출력 요청 반영
         st.markdown(
-            f"<p style='font-size: 16px;'><span style='color: red;'>Bitcoin Dominance: <b>{btc_dominance:.2f}%</b></span></p>", 
+            f"<p style='font-size: 16px;'><span style='color: red;'>Bitcoin Dominance(vs other Coin): <b>{btc_dominance:.2f}%</b></span></p>", 
             unsafe_allow_html=True
         )
 
         # [추가] 글로벌 Gold 시가총액 출력 (고정값의 이름 사용)
         st.write(f"{gold_asset_name} (USD): {int(global_gold_market_cap):,} (USD)")
         
-        # [추가] BTC 시가총액 vs Gold 시가총액 비율 붉은색으로 출력 요청 반영
+        # [수정] BTC vs Gold 시가총액 비율을 'Bitcoin Dominance (vs Gold): X%' 형식으로 붉은색 출력
         st.markdown(
-            f"<p style='font-size: 16px;'>Bitcoin Market Cap is <span style='color: red;'><b>{btc_vs_gold_ratio:.2f}%</b></span> of the {gold_asset_name}.</p>", 
+            f"<p style='font-size: 16px; color: red;'>Bitcoin Dominance (vs Gold): <b>{btc_vs_gold_ratio:.2f}%</b></p>", 
             unsafe_allow_html=True
         )
 
