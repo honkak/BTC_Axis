@@ -458,6 +458,7 @@ st.markdown("---")
 
 # '김치프리미엄' 체크박스 추가
 show_kimchi_premium = st.checkbox("김치프리미엄 보기")
+st.write("100일 동안의 Bitcoin 김치프리미엄 변화추이")
 
 # CoinGecko에서 USDT/USD 데이터를 가져오는 함수 (100일)
 @st.cache_data(ttl=3600)  # 데이터를 1시간 동안 캐싱
@@ -544,16 +545,15 @@ if show_kimchi_premium:
         ax.set_ylabel("Kimchi Premium (%)")
         ax.legend()
         ax.grid()
-
+        
+        st.pyplot(fig)
+        
         # 현재 김치프리미엄 값 출력
         if current_premium is not None:
             st.markdown(
                 f"<p style='font-size: 16px;'>현재 Bitcoin 김치 프리미엄: <b>{current_premium:.2f}%</b></p>",
                 unsafe_allow_html=True
             )
-
-
-        st.pyplot(fig)
     except Exception as e:
         st.error(f"김치프리미엄 데이터를 가져오거나 시각화하는 데 실패했습니다: {e}")
 
