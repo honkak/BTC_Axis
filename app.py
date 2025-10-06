@@ -1,5 +1,5 @@
 ##############################################
-# 비트코인 기준 자산비교 서비스 개발_2024.11.23 #
+# 비트코인 기준 자산비교 서비스 개발_2025.10.06 #
 ##############################################
 
 import streamlit as st
@@ -37,7 +37,7 @@ col_start_date, col_end_date = st.columns(2)
 with col_start_date:
     start_date = st.date_input(
         "조회 시작일을 선택해 주세요",
-        datetime.datetime(2024, 1, 1)
+        datetime.datetime(2025, 1, 1)
     )
 
 with col_end_date:
