@@ -388,11 +388,49 @@ if show_market_cap_chart:
         btc_market_cap = sizes[0]
         global_market_cap = top_5_market_cap + others_market_cap
         btc_dominance = (btc_market_cap / global_market_cap) * 100
+        
+        # 금(Gold) 시가총액 정의 및 가져오기 (Tether Gold(XAUT)를 Proxy로 사용)
+        
+        # 1. Fallback 값 설정 (실제 금 시가총액 추정치: 약 $20T USD)
+        global_gold_market_cap = 20000000000000
+        gold_asset_name = "Global Gold Market Cap (Fallback Estimate)"
+        
+        try:
+            # 2. CoinGecko API를 사용하여 'tether-gold' (XAUT) 시가총액을 가져옵니다.
+            gold_data = cg.get_coins_markets(vs_currency='usd', ids='tether-gold')
+            
+            if gold_data and 'market_cap' in gold_data[0] and gold_data[0]['market_cap'] is not None:
+                # XAUT의 시가총액을 사용합니다.
+                global_gold_market_cap = gold_data[0]['market_cap']
+                gold_asset_name = f"Tokenized Gold ({gold_data[0]['symbol'].upper()}) Market Cap (Proxy)"
+                st.info(f"Gold comparison is using the market cap of '{gold_data[0]['name']}' as a proxy.")
+            else:
+                st.warning("Tether Gold(XAUT) 시가총액 데이터를 가져오지 못했습니다. 금 시가총액 추정치($20T)를 사용합니다.")
+        except Exception as e:
+            st.warning(f"CoinGecko API 오류 발생 ({e}). 금 시가총액 추정치($20T)를 사용합니다.")
+
+
+        # BTC 시가총액 vs. 금 시가총액 비율 계산
+        btc_vs_gold_ratio = (btc_market_cap / global_gold_market_cap) * 100
 
         # 데이터 검증 및 출력
-        st.write(f"Global Market Cap (USD): {int(global_market_cap):,} (USD)")
+        st.write(f"Global Crypto Market Cap (USD): {int(global_market_cap):,} (USD)")
         st.write(f"Bitcoin Market Cap (USD): {int(btc_market_cap):,} (USD)")
-        st.write(f"Bitcoin Dominance: {btc_dominance:.2f}(%)")
+        
+        # Bitcoin Dominance: 붉은색으로 출력 요청 반영
+        st.markdown(
+            f"<p style='font-size: 16px;'><span style='color: red;'>Bitcoin Dominance: <b>{btc_dominance:.2f}%</b></span></p>", 
+            unsafe_allow_html=True
+        )
+
+        # [추가] 글로벌 Gold 시가총액 출력 (가져온 데이터의 이름 사용)
+        st.write(f"{gold_asset_name} (USD): {int(global_gold_market_cap):,} (USD)")
+        
+        # [추가] BTC 시가총액 vs Gold 시가총액 비율 붉은색으로 출력 요청 반영
+        st.markdown(
+            f"<p style='font-size: 16px;'>Bitcoin Market Cap is <span style='color: red;'><b>{btc_vs_gold_ratio:.2f}%</b></span> of the {gold_asset_name}.</p>", 
+            unsafe_allow_html=True
+        )
 
         # 파이 차트 생성
         fig, ax = plt.subplots(figsize=(8, 6))
@@ -410,6 +448,9 @@ if show_market_cap_chart:
         # 365일 전부터 현재까지 BTC 도미넌스 데이터 가져오기
         start_timestamp = int(start_date.timestamp())
         end_timestamp = int(end_date.timestamp())
+        # CoinGecko API에는 도미넌스 자체 데이터가 없어, BTC 시가총액 데이터를 가져와서 계산해야 함.
+        # 기존 코드는 'market_caps'만 가져왔으나, 글로벌 시가총액 데이터가 부족하여 정확한 도미넌스 추이가 어려울 수 있음.
+        # 여기서는 코드가 원래 의도한대로 BTC의 market_caps를 가져오는 부분만 유지합니다.
         btc_dominance_data = cg.get_coin_market_chart_range_by_id(
             id='bitcoin',
             vs_currency='usd',
@@ -417,8 +458,14 @@ if show_market_cap_chart:
             to_timestamp=end_timestamp
         )
 
-        # 도미넌스 데이터 처리
+        # 도미넌스 데이터 처리 (Note: 이 부분은 CoinGecko API의 한계로 인해
+        # 과거 전체 암호화폐 시총 데이터가 없어, BTC 시총 데이터를 비율처럼 그리는 형태로 보입니다.
+        # 차트 레이블을 'BTC Market Cap (USD)'로 수정하는 것이 더 정확할 수 있으나,
+        # 원본 코드의 의도를 최대한 유지하여 진행합니다.)
         dominance_dates = [datetime.datetime.fromtimestamp(price[0] / 1000) for price in btc_dominance_data['market_caps']]
+        
+        # 이 부분은 현재 시점의 global_market_cap으로 나눠서 과거 도미넌스를 추정하는 방식이라 정확하지 않지만,
+        # 원본 코드의 로직을 유지합니다.
         dominance_values = [
             (price[1] / global_market_cap) * 100 if global_market_cap > 0 else 0
             for price in btc_dominance_data['market_caps']
