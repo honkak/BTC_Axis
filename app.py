@@ -1,6 +1,5 @@
 ##############################################
-# 비트코인 기준 자산비교 서비스 개발_2025.10.09 # 
-# 속도개선 캐싱 #
+# 비트코인 기준 자산비교 서비스 개발_2025.10.06 #
 ##############################################
 
 import streamlit as st
@@ -43,121 +42,112 @@ st.markdown("---")
 ######################################
 #BTC 가격 트랜드 기능
 
-# ccxt를 이용한 BTC/KRW 데이터 로드 및 전처리 함수 (캐싱 적용)
-@st.cache_data(ttl=10800) # 3시간 캐싱 적용
-def get_btc_ohlcv_data(start_date, end_date):
-    upbit = ccxt.upbit()
-    upbit_start_date = datetime.date(2017, 10, 24)
-
-    # 경고 및 날짜 자동 조정 로직
-    s_date = start_date
-    e_date = end_date
-    warnings = []
-
-    if s_date < upbit_start_date:
-        s_date = upbit_start_date
-        warnings.append("업비트 가격을 가져오므로 조회 시작일을 2017년 10월 24일 서비스 개시일로 자동 변경합니다.")
-
-    today = datetime.date.today()
-    if e_date > today:
-        e_date = today
-        warnings.append("조회 종료일이 미래 날짜이므로 종료일을 오늘로 설정합니다.")
-        
-    if s_date > e_date:
-        s_date, e_date = e_date, s_date
-        warnings.append("시작일이 종료일보다 늦어 날짜를 맞바꿔 반영합니다.")
-
-
-    # 데이터 조회를 위한 타임스탬프 변환
-    since = int(datetime.datetime.combine(s_date, datetime.datetime.min.time()).timestamp() * 1000)
-    end_timestamp = int(datetime.datetime.combine(e_date, datetime.datetime.max.time()).timestamp() * 1000)
-
-    # 데이터 조회
-    ohlcv = []
-    from_time = since
-    while True:
-        data = upbit.fetch_ohlcv("BTC/KRW", timeframe="1d", since=from_time, limit=200)
-        if not data:
-            break
-        ohlcv.extend(data)
-        last_time = data[-1][0]
-        if last_time >= end_timestamp or last_time == from_time:
-            break
-        from_time = last_time + 1
-
-    if not ohlcv:
-        return pd.DataFrame(), s_date, e_date, warnings
-        
-    df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
-    df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
-    df.set_index("Date", inplace=True)
-    df = df[(df.index >= pd.to_datetime(s_date)) & (df.index <= pd.to_datetime(e_date))]
-    
-    return df, s_date, e_date, warnings
-
-
 # 'BTC 가격' 체크박스 (기본 체크 상태)
 show_btc_price_chart = st.checkbox("Bitcoin 가격", value=False)
 
 if show_btc_price_chart:
     try:
-        df, s_date, e_date, warnings = get_btc_ohlcv_data(start_date, end_date)
+        # 업비트 모듈 초기화
+        upbit = ccxt.upbit()
 
-        for warning in warnings:
-            st.warning(warning)
-            
+        # 업비트 서비스 시작일
+        upbit_start_date = datetime.date(2017, 10, 24)
+
+        # 조회 시작일이 업비트 서비스 시작일 이전이면 자동으로 변경
+        if start_date < upbit_start_date:
+            start_date = upbit_start_date
+            st.warning("업비트 가격을 가져오므로 조회 시작일을 2017년 10월 24일 서비스 개시일로 자동 변경합니다.")
+
+        # 현재 날짜 가져오기
+        today = datetime.date.today()
+
+        # 조회 종료일이 미래인 경우 현재 날짜로 변경
+        if end_date > today:
+            st.warning("조회 종료일이 미래 날짜이므로 종료일을 오늘로 설정합니다.")
+            end_date = today
+
+        # 데이터 조회를 위한 타임스탬프 변환
+        since = int(datetime.datetime.combine(start_date, datetime.datetime.min.time()).timestamp() * 1000)
+        end_timestamp = int(datetime.datetime.combine(end_date, datetime.datetime.max.time()).timestamp() * 1000)
+
+        # 데이터 조회
+        ohlcv = []
+        from_time = since
+        while True:
+            data = upbit.fetch_ohlcv("BTC/KRW", timeframe="1d", since=from_time, limit=200)
+            if not data:
+                break
+            ohlcv.extend(data)
+            last_time = data[-1][0]
+            if last_time >= end_timestamp or last_time == from_time:
+                break
+            from_time = last_time + 1
+
+        # 초기화
         start_price = None
         end_price = None
 
-        if df.empty:
+        if not ohlcv:
             st.warning("선택한 기간에 대한 데이터가 없습니다. 다른 기간을 선택해 주세요.")
         else:
-            start_price = df.iloc[0]["close"]  # 시작 가격
-            end_price = df.iloc[-1]["close"]  # 종료 가격
-            
-            st.write(f"BTC Price (KRW) on {e_date}: {end_price:,.0f} KRW")
+            # 데이터프레임 변환
+            df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
+            df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
+            df.set_index("Date", inplace=True)
+
+            # 조회 시작일과 종료일에 맞게 필터링
+            df = df[(df.index >= pd.to_datetime(start_date)) & (df.index <= pd.to_datetime(end_date))]
+
+            if not df.empty:
+                start_price = df.iloc[0]["close"]  # 시작 가격
+                end_price = df.iloc[-1]["close"]  # 종료 가격
+                # 종료일 문구 출력 (오늘로 고정되었음을 알림)
+                st.write(f"BTC Price (KRW) on {end_date}: {end_price:,.0f} KRW")
+            else:
+                st.warning(f"No closing price data available for {end_date}.")
 
             # 꺾은선 차트 생성
-            st.write(f"BTC Price in KRW: {s_date} to {e_date}")
-            fig, ax = plt.subplots(figsize=(10, 5))
-            ax.plot(df.index, df["close"], label="BTC Price (KRW)", color="green")
-            
-            # 세로축을 100M 단위로 변환
-            def format_krw(value, tick_number):
-                return f"{value / 1e8:.1f} 100M"  # 100M 단위로 변환
-            
-            ax.yaxis.set_major_formatter(ticker.FuncFormatter(format_krw))
-            
-            ax.set_title("Bitcoin Price in KRW (Upbit)", fontsize=16)
-            ax.set_xlabel("Date", fontsize=12)
-            ax.set_ylabel("Price (100M KRW)", fontsize=12)  # 세로축 단위 표시 변경
-            ax.grid(True)
-            ax.legend(fontsize=12)
-            plt.xticks(rotation=45)
-            st.pyplot(fig)
+            if not df.empty:
+                st.write(f"BTC Price in KRW: {start_date} to {end_date}")
+                fig, ax = plt.subplots(figsize=(10, 5))
+                ax.plot(df.index, df["close"], label="BTC Price (KRW)", color="green")
+                
+                # 세로축을 100M 단위로 변환
+                def format_krw(value, tick_number):
+                    return f"{value / 1e8:.1f} 100M"  # 100M 단위로 변환
+                
+                ax.yaxis.set_major_formatter(ticker.FuncFormatter(format_krw))
+                
+                ax.set_title("Bitcoin Price in KRW (Upbit)", fontsize=16)
+                ax.set_xlabel("Date", fontsize=12)
+                ax.set_ylabel("Price (100M KRW)", fontsize=12)  # 세로축 단위 표시 변경
+                ax.grid(True)
+                ax.legend(fontsize=12)
+                plt.xticks(rotation=45)
+                st.pyplot(fig)
 
-            
-            # 1천만 원 투자 결과 계산
-            if start_price and end_price:
-                st.markdown("<h2 style='font-size: 20px;'>1천만 원을 투자했다면,</h2>", unsafe_allow_html=True)
+                
+                # 1천만 원 투자 결과 계산
+                if start_price and end_price:
+                    st.markdown("<h2 style='font-size: 20px;'>1천만 원을 투자했다면,</h2>", unsafe_allow_html=True)
 
-                # 초기 투자금액
-                initial_investment = 10000000  # 1천만 원
+                    # 초기 투자금액
+                    initial_investment = 10000000  # 1천만 원
 
-                # 수익률 계산
-                return_percentage = ((end_price - start_price) / start_price) * 100
-                profit_amount = (return_percentage / 100) * initial_investment
-                total_amount = initial_investment + profit_amount
+                    # 수익률 계산
+                    return_percentage = ((end_price - start_price) / start_price) * 100
+                    profit_amount = (return_percentage / 100) * initial_investment
+                    total_amount = initial_investment + profit_amount
 
-                # 수익률 색상 결정
-                color = 'red' if return_percentage >= 0 else 'blue'
+                    # 수익률 색상 결정
+                    color = 'red' if return_percentage >= 0 else 'blue'
 
-                # 결과 출력
-                st.markdown(
-                    f"BTC에 1천만 원을 투자했더라면, 현재 {total_amount:,.0f} 원이 되었을 것입니다. "
-                    f"(<span style='color: {color};'>수익률: {return_percentage:.2f}%</span>)",
-                    unsafe_allow_html=True,
-                )
+                    # 결과 출력
+                    st.markdown(
+                        f"BTC에 1천만 원을 투자했더라면, 현재 {total_amount:,.0f} 원이 되었을 것입니다. "
+                        f"(<span style='color: {color};'>수익률: {return_percentage:.2f}%</span>)",
+                        unsafe_allow_html=True,
+                    )
 
     except Exception as e:
         st.error(f"비트코인 데이터를 가져오는 중 오류가 발생했습니다: {e}")
@@ -171,11 +161,9 @@ st.markdown("---")
 # '비트코인 기준 자산흐름' 체크박스
 fixed_ratio = st.checkbox("BTC 기준 자산흐름(Bitcoin Axis)")
 
-@st.cache_data(ttl=10800) # 3시간 캐싱 적용
 def fetch_full_ohlcv(exchange, symbol, timeframe, since, until):
     """업비트 API를 통해 전체 데이터를 가져오는 함수"""
     all_data = []
-    # ccxt 사용 시 내부적으로 rate limiting이 잘 처리되므로 time.sleep은 생략
     while since < until.timestamp() * 1000:
         try:
             ohlcv = exchange.fetch_ohlcv(symbol, timeframe, since, limit=200)  # 최대 200개
@@ -189,7 +177,7 @@ def fetch_full_ohlcv(exchange, symbol, timeframe, since, until):
     return all_data
 
 if fixed_ratio:
-    # 코인/종목 코드 입력 필드
+    # 코인/종목 코드 입력 필드 (디폴트 값 ETH, SOL 반영)
     col_code1, col_code2, col_code3 = st.columns(3)
     with col_code1:
         code1 = st.text_input('자산코드 1', value='ETH', placeholder='코드입력 - (예시)ETH')
@@ -227,7 +215,7 @@ if fixed_ratio:
         for code in codes:
             try:
                 pair = f"{code}/BTC"
-                # 전체 데이터 가져오기 (캐싱된 함수 호출)
+                # 전체 데이터 가져오기
                 ohlcv = fetch_full_ohlcv(upbit, pair, "1d", int(start_datetime.timestamp() * 1000), end_datetime)
                 df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
                 df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
@@ -242,7 +230,6 @@ if fixed_ratio:
     # USD/BTC와 KRW/BTC 추가
     if add_usd:
         try:
-            # 캐싱된 함수 호출
             ohlcv = fetch_full_ohlcv(upbit, "BTC/USDT", "1d", int(start_datetime.timestamp() * 1000), end_datetime)
             df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
             df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
@@ -254,7 +241,6 @@ if fixed_ratio:
 
     if add_krw:
         try:
-            # 캐싱된 함수 호출
             ohlcv = fetch_full_ohlcv(upbit, "BTC/KRW", "1d", int(start_datetime.timestamp() * 1000), end_datetime)
             df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
             df["Date"] = pd.to_datetime(df["timestamp"], unit="ms")
@@ -375,7 +361,7 @@ if show_market_cap_chart:
         start_date = end_date - datetime.timedelta(days=365)
 
         # 1. 상위 암호화폐 시가총액 가져오기 (최신 데이터) - API 호출 1
-        time.sleep(1) # API 지연 추가 (429 오류 방지)
+        time.sleep(1) # API 지연 추가
         top_coins = cg.get_coins_markets(vs_currency='usd', order='market_cap_desc', per_page=100, page=1)
         if not top_coins:
             raise ValueError("상위 암호화폐 데이터를 가져오는 데 실패했습니다.")
@@ -406,6 +392,7 @@ if show_market_cap_chart:
         btc_dominance = (btc_market_cap / global_market_cap) * 100
         
         # 금(Gold) 시가총액 정의 및 가져오기 (사용자 요청에 따라 고정값으로 하드코딩)
+        # 1. 고정값 설정 (실제 금 시가총액 추정치: 약 $15.8T USD)
         global_gold_market_cap = 15800000000000
         gold_asset_name = "Global Physical Gold Market Cap (Fixed Estimate)"
         
@@ -439,7 +426,7 @@ if show_market_cap_chart:
         start_timestamp = int(start_date.timestamp())
         end_timestamp = int(end_date.timestamp())
         
-        time.sleep(1) # API 지연 추가 (429 오류 방지)
+        time.sleep(1) # API 지연 추가
         btc_dominance_data = cg.get_coin_market_chart_range_by_id(
             id='bitcoin',
             vs_currency='usd',
@@ -504,9 +491,9 @@ show_kimchi_premium = st.checkbox("김치프리미엄 보기")
 
 
 # CoinGecko에서 USDT/USD 데이터를 가져오는 함수 (100일)
-@st.cache_data(ttl=10800)  # 3시간 캐싱 적용
+@st.cache_data(ttl=3600)  # 데이터를 1시간 동안 캐싱
 def fetch_usdt_prices_cg():
-    # CoinGecko API 호출 전에 지연 시간 추가 (429 오류 방지)
+    # CoinGecko API 호출 전에 지연 시간 추가
     time.sleep(1) 
     url = "https://api.coingecko.com/api/v3/coins/tether/market_chart"
     params = {
@@ -524,7 +511,7 @@ if show_kimchi_premium:
     st.write("100일 동안의 Bitcoin 김치프리미엄 변화추이") # 체크박스 클릭 시 텍스트 표시
     try:
         # 환율 가져오기 함수 (현재 환율)
-        @st.cache_data(ttl=10800) # 3시간 캐싱 적용
+        @st.cache_data(ttl=3600)
         def get_exchange_rate():
             url = "https://open.er-api.com/v6/latest/USD"
             response = requests.get(url)
@@ -533,7 +520,6 @@ if show_kimchi_premium:
             return data['rates']['KRW']
 
         # 업비트와 코인게코 데이터를 사용한 김치프리미엄 계산
-        @st.cache_data(ttl=10800) # 3시간 캐싱 적용
         def fetch_historical_data():
             upbit = ccxt.upbit()
             cg = CoinGeckoAPI()
@@ -542,7 +528,7 @@ if show_kimchi_premium:
             end_date_hist = datetime.datetime.now()
             start_date_hist = end_date_hist - datetime.timedelta(days=100)
 
-            # 업비트 데이터 가져오기
+            # 업비트 데이터 가져오기 (ccxt는 자체적으로 호출 지연 처리가 있을 수 있으나, 안전을 위해 time.sleep 추가는 생략)
             since = int(start_date_hist.timestamp() * 1000)
             upbit_data = upbit.fetch_ohlcv("BTC/KRW", timeframe="1d", since=since)
             upbit_df = pd.DataFrame(upbit_data, columns=["timestamp", "open", "high", "low", "close", "volume"])
@@ -615,9 +601,9 @@ st.markdown("---")
 # 'USDT 가격변화' 기능 구현
         
 # CoinGecko에서 USDT/USD 데이터를 가져오는 함수 (100일)
-@st.cache_data(ttl=10800)  # 3시간 캐싱 적용
+@st.cache_data(ttl=3600)  # 데이터를 1시간 동안 캐싱
 def fetch_usdt_prices_cg():
-    # CoinGecko API 호출 전에 지연 시간 추가 (429 오류 방지)
+    # CoinGecko API 호출 전에 지연 시간 추가
     time.sleep(1) 
     url = "https://api.coingecko.com/api/v3/coins/tether/market_chart"
     params = {
@@ -632,7 +618,7 @@ def fetch_usdt_prices_cg():
 
 
 # USD/KRW 역사적 환율 데이터를 가져오는 함수 (FinanceDataReader 사용)
-@st.cache_data(ttl=10800) # 3시간 캐싱 적용
+@st.cache_data(ttl=3600)
 def fetch_historical_usd_krw_rate():
     end_date = datetime.datetime.now().strftime("%Y-%m-%d")
     start_date = (datetime.datetime.now() - datetime.timedelta(days=100)).strftime("%Y-%m-%d")
@@ -649,7 +635,7 @@ def fetch_historical_usd_krw_rate():
 
 
 # 업비트에서 USDT/KRW 데이터를 가져오는 함수
-@st.cache_data(ttl=10800)  # 3시간 캐싱 적용
+@st.cache_data(ttl=3600)  # 데이터를 1시간 동안 캐싱
 def fetch_usdt_krw_upbit():
     url = "https://api.upbit.com/v1/candles/days"
     params = {"market": "KRW-USDT", "count": 100}  # 100일 데이터만 요청
@@ -665,20 +651,20 @@ show_usdt_chart = st.checkbox("USDT 가격변화")
 
 if show_usdt_chart:
     try:
-        # CoinGecko에서 USDT/USD 데이터 가져오기 (캐싱된 함수 호출)
+        # CoinGecko에서 USDT/USD 데이터 가져오기 (데이터는 여전히 필요)
         prices_usdt_usd = fetch_usdt_prices_cg()
         df_usdt_usd = pd.DataFrame(prices_usdt_usd, columns=["timestamp", "price"])
         df_usdt_usd["date"] = pd.to_datetime(df_usdt_usd["timestamp"], unit="ms").dt.normalize()
         df_usdt_usd = df_usdt_usd[["date", "price"]].set_index("date").rename(columns={"price": "USDT_CG_USD_Price"})
 
-        # 업비트에서 USDT/KRW 데이터 가져오기 (캐싱된 함수 호출)
+        # 업비트에서 USDT/KRW 데이터 가져오기
         usdt_krw_data = fetch_usdt_krw_upbit()
         df_usdt_krw = pd.DataFrame(usdt_krw_data)
         df_usdt_krw["date"] = pd.to_datetime(df_usdt_krw["date"]).dt.normalize()
         df_usdt_krw.rename(columns={"price": "price_krw"}, inplace=True)
         df_usdt_krw = df_usdt_krw.set_index("date")
         
-        # USD/KRW 역사적 환율 데이터 가져오기 (캐싱된 함수 호출)
+        # USD/KRW 역사적 환율 데이터 가져오기
         df_fx_krw = fetch_historical_usd_krw_rate()
 
         # 데이터 병합 (날짜를 기준으로)
