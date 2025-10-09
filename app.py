@@ -44,7 +44,7 @@ st.markdown("---")
 #BTC 가격 트랜드 기능
 
 # 'BTC 가격' 체크박스 (기본 체크 상태)
-show_btc_price_chart = st.checkbox("Bitcoin 가격", value=False)
+show_btc_price_chart = st.checkbox("Bitcoin 가격", key="btc_price_chart_key", value=False) # Key 추가
 
 if show_btc_price_chart:
     try:
@@ -162,7 +162,7 @@ st.markdown("---")
 
 #####################################
 # '비트코인 기준 자산흐름' 체크박스
-fixed_ratio = st.checkbox("BTC 기준 자산흐름(Bitcoin Axis)")
+fixed_ratio = st.checkbox("BTC 기준 자산흐름(Bitcoin Axis)", key="fixed_ratio_key") # Key 추가
 
 def fetch_full_ohlcv(exchange, symbol, timeframe, since, until):
     """업비트 API를 통해 전체 데이터를 가져오는 함수"""
@@ -231,502 +231,20 @@ if fixed_ratio:
     # 1행: USD/BTC, KRW/BTC, SPY/BTC
     col_cb1, col_cb2, col_cb3 = st.columns(3)
     with col_cb1:
-        add_usd = st.checkbox("USD/BTC(달러)")
+        add_usd = st.checkbox("USD/BTC(달러)", key="add_usd_key") # Key 추가
     with col_cb2:
-        add_krw = st.checkbox("KRW/BTC(원화)")
+        add_krw = st.checkbox("KRW/BTC(원화)", key="add_krw_key") # Key 추가
     with col_cb3:
-        add_apartment = st.checkbox("SPY/BTC(S&P500)")
+        add_apartment = st.checkbox("SPY/BTC(S&P500)", key="add_spy_key") # Key 추가
         
     # 2행: QQQ/BTC, EWY/BTC, GLD/BTC
     col_cb4, col_cb5, col_cb6 = st.columns(3)
     with col_cb4:
-        add_qqq = st.checkbox("QQQ/BTC(NASDAQ)")
+        add_qqq = st.checkbox("QQQ/BTC(NASDAQ)", key="add_qqq_key") # Key 추가
     with col_cb5:
-        add_ewy = st.checkbox("EWY/BTC(KOREA)") # EWY 체크박스 추가
+        add_ewy = st.checkbox("EWY/BTC(KOREA)", key="add_ewy_key") # Key 추가
     with col_cb6:
-        add_gld = st.checkbox("GLD/BTC(GOLD)") # GLD 체크박스 추가
-
-    # 기준시점 수익률 비교 차트 생성
-    ohlcv_data = {}
-    
-    # 1. 코인/BTC 데이터 조회
-    if codes:
-        for code in codes:
-            try:
-                pair = f"{code}/BTC"
-                # 전체 데이터 가져오기
-                ohlcv = fetch_full_ohlcv(upbit, pair, "1d", start_timestamp_ms, end_datetime)
-                df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
-                df["Date"] = pd.to_datetime(df["timestamp"], unit="ms").dt.normalize()
-                df.set_index("Date", inplace=True)
-
-                # 기간 필터링
-                df = df.loc[start_datetime:end_datetime].dropna()
-                ohlcv_data[f"{code}/BTC"] = df["close"]
-            except Exception as e:
-                st.warning(f"[{code}/BTC] 데이터를 가져오는 중 문제가 발생했습니다: {e}")
-
-    # 2. BTC/USDT 데이터 미리 가져오기 (USD/BTC, SPY/BTC, QQQ/BTC, EWY/BTC, GLD/BTC에서 재사용)
-    btc_usdt_data = None
-    if add_usd or add_apartment or add_qqq or add_ewy or add_gld: # <-- EWY, GLD 조건 추가
-        try:
-            btc_usdt_ohlcv = fetch_full_ohlcv(upbit, "BTC/USDT", "1d", start_timestamp_ms, end_datetime)
-            df_btc_usdt = pd.DataFrame(btc_usdt_ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
-            df_btc_usdt["Date"] = pd.to_datetime(df_btc_usdt["timestamp"], unit="ms").dt.normalize()
-            df_btc_usdt.set_index("Date", inplace=True)
-            btc_usdt_data = df_btc_usdt.loc[start_datetime:end_datetime].dropna()
-        except Exception as e:
-            st.warning(f"BTC/USDT (USD 기준) 데이터를 가져오는 중 문제가 발생했습니다: {e}")
-            
-    # 3. USD/BTC 추가
-    if add_usd and btc_usdt_data is not None:
-        try:
-            # USD/BTC = 1 / BTC/USDT (Close)
-            ohlcv_data["USD/BTC"] = 1 / btc_usdt_data["close"]
-        except Exception as e:
-            st.warning(f"USD/BTC 비율을 계산하는 중 문제가 발생했습니다: {e}")
-
-    # 4. KRW/BTC 추가
-    if add_krw:
-        try:
-            btc_krw_ohlcv = fetch_full_ohlcv(upbit, "BTC/KRW", "1d", start_timestamp_ms, end_datetime)
-            df_btc_krw = pd.DataFrame(btc_krw_ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
-            df_btc_krw["Date"] = pd.to_datetime(df_btc_krw["timestamp"], unit="ms").dt.normalize()
-            df_btc_krw.set_index("Date", inplace=True)
-            df_btc_krw = df_btc_krw.loc[start_datetime:end_datetime].dropna()
-            
-            # KRW/BTC = 1 / BTC/KRW (Close)
-            ohlcv_data["KRW/BTC"] = 1 / df_btc_krw["close"]
-        except Exception as e:
-            st.warning(f"KRW/BTC 데이터를 가져오는 중 문제가 발생했습니다: {e}")
-
-    # 5. SPY/BTC 추가 (S&P 500 대비 BTC)
-    if add_apartment:
-        if btc_usdt_data is not None:
-            try:
-                # 5-1. SPY (S&P 500 ETF) 가격 데이터 (USD)
-                spy_df = fdr.DataReader('SPY', start=start_date, end=end_date)
-                spy_close = spy_df['Close'].rename('SPY_Close').asfreq('D') # 일별 빈도로 변경
-
-                # 5-2. BTC/USDT (USD) 가격
-                btc_usdt_close = btc_usdt_data["close"].rename('BTC_USDT_Close').asfreq('D')
-
-                # 5-3. 날짜 기준 병합 및 SPY/BTC 비율 계산
-                ratio_df = pd.concat([spy_close, btc_usdt_close], axis=1).dropna()
-                ratio_df['SPY/BTC'] = ratio_df['SPY_Close'] / ratio_df['BTC_USDT_Close']
-
-                # 5-4. 최종 데이터 추가
-                ohlcv_data["SPY/BTC"] = ratio_df['SPY/BTC']
-            except Exception as e:
-                st.warning(f"SPY/BTC (S&P500) 데이터를 가져오거나 계산하는 중 문제가 발생했습니다: {e}")
-        else:
-            st.warning("SPY/BTC 데이터를 계산하려면 BTC/USDT 데이터가 필요합니다. 데이터를 불러올 수 없습니다.")
-
-    # 6. QQQ/BTC 추가 (NASDAQ 100 대비 BTC)
-    if add_qqq:
-        if btc_usdt_data is not None:
-            try:
-                # 6-1. QQQ (NASDAQ 100 ETF) 가격 데이터 (USD)
-                qqq_df = fdr.DataReader('QQQ', start=start_date, end=end_date)
-                # 일별 빈도로 변경 및 NaN 제거
-                qqq_close = qqq_df['Close'].rename('QQQ_Close').asfreq('D') 
-
-                # 6-2. BTC/USDT (USD) 가격
-                btc_usdt_close = btc_usdt_data["close"].rename('BTC_USDT_Close').asfreq('D')
-
-                # 6-3. 날짜 기준 병합 및 QQQ/BTC 비율 계산
-                ratio_df_qqq = pd.concat([qqq_close, btc_usdt_close], axis=1).dropna()
-                # QQQ 가격을 BTC 가격으로 나눔
-                ratio_df_qqq['QQQ/BTC'] = ratio_df_qqq['QQQ_Close'] / ratio_df_qqq['BTC_USDT_Close']
-
-                # 6-4. 최종 데이터 추가
-                ohlcv_data["QQQ/BTC"] = ratio_df_qqq['QQQ/BTC']
-            except Exception as e:
-                st.warning(f"QQQ/BTC (NASDAQ) 데이터를 가져오거나 계산하는 중 문제가 발생했습니다: {e}")
-        else:
-            st.warning("QQQ/BTC 데이터를 계산하려면 BTC/USDT 데이터가 필요합니다. 데이터를 불러올 수 없습니다.")
-            
-    # 7. EWY/BTC 추가 (KOREA 대비 BTC) - 신규 기능
-    if add_ewy:
-        if btc_usdt_data is not None:
-            try:
-                # 7-1. EWY (iShares MSCI South Korea ETF) 가격 데이터 (USD)
-                ewy_df = fdr.DataReader('EWY', start=start_date, end=end_date)
-                ewy_close = ewy_df['Close'].rename('EWY_Close').asfreq('D') 
-
-                # 7-2. BTC/USDT (USD) 가격
-                btc_usdt_close = btc_usdt_data["close"].rename('BTC_USDT_Close').asfreq('D')
-
-                # 7-3. 날짜 기준 병합 및 EWY/BTC 비율 계산
-                ratio_df_ewy = pd.concat([ewy_close, btc_usdt_close], axis=1).dropna()
-                ratio_df_ewy['EWY/BTC'] = ratio_df_ewy['EWY_Close'] / ratio_df_ewy['BTC_USDT_Close']
-
-                # 7-4. 최종 데이터 추가
-                ohlcv_data["EWY/BTC"] = ratio_df_ewy['EWY/BTC']
-            except Exception as e:
-                st.warning(f"EWY/BTC (KOREA) 데이터를 가져오거나 계산하는 중 문제가 발생했습니다: {e}")
-        else:
-            st.warning("EWY/BTC 데이터를 계산하려면 BTC/USDT 데이터가 필요합니다. 데이터를 불러올 수 없습니다.")
-
-    # 8. GLD/BTC 추가 (GOLD 대비 BTC) - 신규 기능
-    if add_gld:
-        if btc_usdt_data is not None:
-            try:
-                # 8-1. GLD (SPDR Gold Shares ETF) 가격 데이터 (USD)
-                gld_df = fdr.DataReader('GLD', start=start_date, end=end_date)
-                gld_close = gld_df['Close'].rename('GLD_Close').asfreq('D') 
-
-                # 8-2. BTC/USDT (USD) 가격
-                btc_usdt_close = btc_usdt_data["close"].rename('BTC_USDT_Close').asfreq('D')
-
-                # 8-3. 날짜 기준 병합 및 GLD/BTC 비율 계산
-                ratio_df_gld = pd.concat([gld_close, btc_usdt_close], axis=1).dropna()
-                ratio_df_gld['GLD/BTC'] = ratio_df_gld['GLD_Close'] / ratio_df_gld['BTC_USDT_Close']
-
-                # 8-4. 최종 데이터 추가
-                ohlcv_data["GLD/BTC"] = ratio_df_gld['GLD/BTC']
-            except Exception as e:
-                st.warning(f"GLD/BTC (GOLD) 데이터를 가져오거나 계산하는 중 문제가 발생했습니다: {e}")
-        else:
-            st.warning("GLD/BTC 데이터를 계산하려면 BTC/USDT 데이터가 필요합니다. 데이터를 불러올 수 없습니다.")
-
-
-    # 최종 차트 생성
-    if ohlcv_data:
-        df_combined = pd.DataFrame(ohlcv_data).dropna() # NaN 값 제거
-        
-        if not df_combined.empty:
-            # 기준 시점(첫 번째 유효한 값)으로 정규화
-            first_valid_row = df_combined.iloc[0]
-            # 0으로 나누는 오류 방지: 0인 경우 해당 컬럼의 변화율 계산에서 제외하거나 경고
-            safe_first_valid_row = first_valid_row.replace(0, np.nan) 
-            df_normalized = df_combined.div(safe_first_valid_row) * 100 - 100
-            
-            # 모든 값이 NaN인 컬럼 제거
-            df_normalized = df_normalized.dropna(axis=1, how='all')
-
-
-            fig, ax = plt.subplots(figsize=(12, 6))
-            ax.set_ylabel("Percentage Change (%)", fontsize=12)
-
-            # 0%에 붉은 점선 추가
-            ax.axhline(y=0, color="red", linestyle="--", linewidth=1, label="0% Baseline")
-
-            for column in df_normalized.columns:
-                ax.plot(df_normalized.index, df_normalized[column], label=column)
-
-            ax.set_title(f"Asset Performance Relative to BTC ({start_date} to {end_date})", fontsize=16)
-            ax.set_xlabel("Date", fontsize=12)
-            ax.legend()
-            ax.grid(True)
-            plt.xticks(rotation=45)
-            st.pyplot(fig)
-        else:
-            st.warning("선택한 기간에 유효한 데이터가 없어 차트를 생성할 수 없습니다.")
-    else:
-        st.warning("조회결과가 없습니다. 코드를 입력하거나 자산을 선택해주세요.")
-
-    #######################
-
-# 주어진 코인 이름과 코인 코드 (생략 없이 유지)
-coins = [
-    ("이더리움", "ETH"), ("리플", "XRP"), ("에이다", "ADA"),
-    ("솔라나", "SOL"), ("폴카닷", "DOT"), ("도지코인", "DOGE"), ("체인링크", "LINK"),
-    ("라이트코인", "LTC"), ("비트코인캐시", "BCH"), ("스텔라루멘", "XLM"), ("트론", "TRX"),
-    ("이오스", "EOS"), ("비체인", "VET"), ("테조스", "XTZ"), ("코스모스", "ATOM"),
-    ("파일코인", "FIL"), ("이더리움클래식", "ETC"), ("네오", "NEO"), ("퀀텀", "QTUM"),
-    ("아이콘", "ICX"), ("온톨로지", "ONT"), ("질리카", "ZIL"), ("스테이터스네트워크토큰", "SNT"),
-    ("메인프레임", "MFT"), ("시빅", "CVC"), ("스톰엑스", "STMX"), ("펀디엑스", "PUNDIX"),
-    ("오미세고", "OMG"), ("왁스", "WAXP"), ("엔진코인", "ENJ"), ("디센트럴랜드", "MANA"),
-    ("샌드박스", "SAND"), ("엑시인피니티", "AXS"), ("칠리즈", "CHZ"), ("보라", "BORA"),
-    ("플레이댑", "PLA"), ("알파쿼크", "AQT"), ("밀크", "MLK"), ("썸씽", "SSX"),
-    ("무비블록", "MBL"), ("메디블록", "MED"), ("아하토큰", "AHT"), ("디카르고", "DKA"),
-    ("센티넬프로토콜", "UPP"), ("피르마체인", "FCT2"), ("아르고", "AERGO"), ("오브스", "ORBS"),
-    ("카바", "KAVA"), ("스트라이크", "STRK"), ("스택스", "STX"), ("폴리곤", "MATIC"),
-    ("스와이프", "SXP"), ("앵커", "ANKR"), ("세럼", "SRM"), ("솔라", "SXP"),
-    ("이캐시", "XEC"), ("비트토렌트", "BTT"), ("트러스트월렛토큰", "TWT"), ("오션프로토콜", "OCEAN"),
-    ("오리진프로토콜", "OGN"), ("온버프", "ONIT"), ("오키드", "OXT"), ("프롬", "PROM"),
-    ("파리생제르맹", "PSG"), ("퀴즈톡", "QTCON"), ("래드웍스", "RAD"), ("레이디움", "RAY"),
-    ("레이", "REI"), ("아이젝", "RLC"), ("랠리", "RLY"), ("랜더토큰", "RNDR"),
-    ("리저브라이트", "RSR"), ("레이븐코인", "RVN"), ("신세틱스", "SNX"), ("스타게이트파이낸스", "STG"),
-    ("썬", "SUN"), ("쓰레쉬홀드", "T"), ("트루USD", "TUSD"), ("팍스달러", "USDP"),
-    ("밸리디티", "VAL"), ("일드길드게임즈", "YGG"), ("토트넘훗스퍼", "SPURS")
-]
-
-# 코인 리스트 데이터프레임 구성
-columns = ["코인명1", "코인코드1", "코인명2", "코인코드2", "코인명3", "코인코드3"]
-data = []
-
-for i in range(0, len(coins), 3):
-    row = []
-    for j in range(3):
-        if i + j < len(coins):
-            row.extend(coins[i + j])
-        else:
-            row.extend(["", ""])  # 빈칸 채우기
-    data.append(row)
-
-df_coins = pd.DataFrame(data, columns=columns)
-
-# 스타일링 함수 정의
-def highlight_columns(x):
-    # 기본 스타일: 텍스트 색상을 지정하지 않아 Streamlit 테마에 따르게 함 (다크모드=흰색, 라이트모드=검은색)
-    style = pd.DataFrame("", index=x.index, columns=x.columns)
-    
-    # 1, 3, 5열 (이름 열)에 회색 배경과 검은색 텍스트 적용 (다크모드 가시성 확보)
-    style.iloc[:, [0, 2, 4]] = "background-color: lightgrey; color: black;"
-    
-    return style
-
-# 상태 초기화
-if "show_coins" not in st.session_state:
-    st.session_state.show_coins = False
-
-# 버튼 배치
-col_button1 = st.columns([1])[0] # 버튼을 가운데 정렬하기 위해 1열 컬럼만 사용
-with col_button1:
-    if st.button("코인 리스트"):
-        st.session_state.show_coins = not st.session_state.show_coins
-
-# 데이터프레임 표시
-if st.session_state.show_coins:
-    # st.markdown("### 코인 리스트")
-    st.dataframe(df_coins.style.apply(highlight_columns, axis=None), use_container_width=True)
-
-
-######################################
-
-# 수평선 추가
-st.markdown("---")
-
-#####################################
-#시가총액 비율 기능
-
-# 'BTC 시가총액 비율' 체크박스
-show_market_cap_chart = st.checkbox("Bitcoin 시가총액 비율")
-
-if show_market_cap_chart:
-    cg = CoinGeckoAPI()
-
-    try:
-        # 강제로 현재 시점 기준으로 365일 전부터 데이터 설정
-        end_date_cap = datetime.datetime.now()
-        start_date_cap = end_date_cap - datetime.timedelta(days=365)
-
-        # 1. 상위 암호화폐 시가총액 가져오기 (최신 데이터) - API 호출 1
-        time.sleep(1) # API 지연 추가
-        top_coins = cg.get_coins_markets(vs_currency='usd', order='market_cap_desc', per_page=100, page=1)
-        if not top_coins:
-            raise ValueError("상위 암호화폐 데이터를 가져오는 데 실패했습니다.")
-
-        # 상위 5개 코인과 Others 처리
-        top_5_coins = top_coins[:5]  # 상위 5개 코인
-        top_5_market_cap = sum(coin['market_cap'] for coin in top_5_coins)
-        others_market_cap = sum(coin['market_cap'] for coin in top_coins[5:])  # 나머지 코인
-
-        # 데이터 준비
-        labels = [coin['name'] for coin in top_5_coins] + ['Others']
-        sizes = [coin['market_cap'] for coin in top_5_coins] + [others_market_cap]
-
-        # Bitcoin 색상 및 다른 조각 색상 설정
-        pie_colors = ['#5ba6e1'] + ['#e57373', '#99ff99', '#ffcc99', '#c2c2f0', '#ffb3e6']
-
-        # 모든 조각을 5%씩 분리
-        explode = [0.05 for _ in labels]
-
-        # 폰트 및 스타일 설정
-        font_size = 10  # 차트 폰트 크기
-        title_font_size = 14  # 차트 제목 폰트 크기
-        axis_font_size = 8  # 축 폰트 크기
-
-        # BTC 시가총액 및 도미넌스 계산
-        btc_market_cap = sizes[0]
-        global_market_cap = top_5_market_cap + others_market_cap
-        btc_dominance = (btc_market_cap / global_market_cap) * 100
-        
-        # 금(Gold) 시가총액 정의 및 가져오기 (사용자 요청에 따라 고정값으로 하드코딩)
-        # 1. 고정값 설정 (실제 금 시가총액 추정치: 약 $15.8T USD)
-        global_gold_market_cap = 15800000000000
-        gold_asset_name = "Global Physical Gold Market Cap (Fixed Estimate)"
-        
-        # BTC 시가총액 vs. 금 시가총액 비율 계산
-        btc_vs_gold_ratio = (btc_market_cap / global_gold_market_cap) * 100
-
-        # 데이터 검증 및 출력
-        st.write(f"Global Crypto Market Cap (USD): {int(global_market_cap):,} (USD)")
-        st.write(f"Bitcoin Market Cap (USD): {int(btc_market_cap):,} (USD)")
-        
-        # Bitcoin Dominance: 붉은색으로 출력 요청 반영 (1차 차트 위의 도미넌스)
-        st.markdown(
-            f"<p style='font-size: 16px;'><span style='color: red;'>Bitcoin Dominance(vs other Coin): <b>{btc_dominance:.2f}%</b></span></p>",
-            unsafe_allow_html=True
-        )
-
-        # 파이 차트 생성
-        fig, ax = plt.subplots(figsize=(8, 6))
-        ax.pie(
-            sizes,
-            labels=labels,
-            autopct=lambda p: f'{p:.1f}%' if p > 0 else '',
-            startangle=140,
-            colors=pie_colors,
-            explode=explode
-        )
-        ax.set_title('Market Cap Distribution(Now)', fontsize=title_font_size)
-        st.pyplot(fig)
-
-        # 2. 365일 전부터 현재까지 BTC 도미넌스 데이터 가져오기 - API 호출 2
-        start_timestamp = int(start_date_cap.timestamp())
-        end_timestamp = int(end_date_cap.timestamp())
-        
-        time.sleep(1) # API 지연 추가
-        # Coingecko API는 도미넌스 데이터를 직접 제공하지 않고 BTC 마켓캡과 Total 마켓캡을 제공
-        # 여기서는 BTC 마켓캡 데이터를 가져와서 (global_market_cap이 고정되지 않았다는 가정 하에) 추세만 확인
-        # 현재 코드의 로직을 유지하며, global_market_cap이 과거 데이터에 따라 변동될 수 있음을 유의
-        btc_dominance_data = cg.get_coin_market_chart_range_by_id(
-            id='bitcoin',
-            vs_currency='usd',
-            from_timestamp=start_timestamp,
-            to_timestamp=end_timestamp
-        )
-
-        # 도미넌스 데이터 처리 
-        # CoinGecko는 BTC 도미넌스 자체를 주지 않으므로, 이 데이터는 실제 BTC 마켓캡 추이입니다.
-        # 그러나 기존 코드에서 'market_caps'를 사용했으므로 이를 BTC 마켓캡 트렌드로 사용
-        dominance_dates = [datetime.datetime.fromtimestamp(price[0] / 1000) for price in btc_dominance_data['market_caps']]
-        
-        # 실제 CoinGecko API로 과거의 전체 마켓캡을 가져오지 못하므로, 
-        # 기존 로직 대신, BTC 마켓캡이 어떻게 변했는지 보여주는 방식으로 수정합니다.
-        # 즉, 이는 도미넌스가 아니라 BTC 마켓캡의 변화율입니다.
-        df_market_cap = pd.DataFrame(btc_dominance_data['market_caps'], columns=['timestamp', 'market_cap'])
-        df_market_cap['Date'] = pd.to_datetime(df_market_cap['timestamp'], unit='ms').dt.normalize()
-        df_market_cap.set_index('Date', inplace=True)
-        
-        # 첫날을 기준으로 변화율 (%) 계산
-        initial_cap = df_market_cap.iloc[0]['market_cap']
-        df_market_cap['Market Cap Change (%)'] = (df_market_cap['market_cap'] / initial_cap) * 100 - 100
-
-        # 강제 기간: 365일 전부터 현재 날짜까지
-        start_date_str = start_date_cap.strftime("%Y-%m-%d")
-        end_date_str = end_date_cap.strftime("%Y-%m-%d")
-
-        
-        # 꺾은선 그래프 생성
-        fig, ax = plt.subplots(figsize=(10, 5))
-        ax.plot(df_market_cap.index, df_market_cap["Market Cap Change (%)"], label="BTC Market Cap Change (%)", color="green")
-        ax.axhline(0, color='red', linestyle='--', linewidth=0.8) # 0% 기준선 추가
-        ax.set_title(f"BTC Market Cap Change Over Time ({start_date_str} to {end_date_str})", fontsize=title_font_size)
-        ax.set_xlabel("Date", fontsize=axis_font_size)
-        ax.set_ylabel("BTC Market Cap Change (%)", fontsize=axis_font_size)
-        ax.grid(True)
-        ax.legend(fontsize=font_size)
-        plt.xticks(rotation=45, fontsize=axis_font_size)  # X축 날짜를 대각선으로 표시
-        st.pyplot(fig) # <<-- 꺾은선 그래프 출력 (두 번째 차트)
-
-        
-        # [수정된 위치]: 꺾은선 그래프 (두 번째 차트) 바로 아래로 이동
-        # [추가] 글로벌 Gold 시가총액 출력 (고정값의 이름 사용)
-        st.write(f"{gold_asset_name} (USD): {int(global_gold_market_cap):,} (USD)")
-        
-        # [수정] BTC vs Gold 시가총액 비율을 'Bitcoin Dominance (vs Gold): X%' 형식으로 붉은색 출력
-        st.markdown(
-            f"<p style='font-size: 16px; color: red;'>Bitcoin Dominance (vs Gold): <b>{btc_vs_gold_ratio:.2f}%</b></p>",
-            unsafe_allow_html=True
-        )
-
-    except Exception as e:
-        st.error(f"암호화폐 데이터를 불러오는 데 실패했습니다: {e}")
-
-######################################
-
-# 수평선 추가
-st.markdown("---")
-
-#####################################
-# '비트코인 기준 자산흐름' 체크박스
-fixed_ratio = st.checkbox("BTC 기준 자산흐름(Bitcoin Axis)")
-
-def fetch_full_ohlcv(exchange, symbol, timeframe, since, until):
-    """업비트 API를 통해 전체 데이터를 가져오는 함수"""
-    all_data = []
-    # until은 datetime 객체이므로 timestamp()로 변환 필요
-    until_ts_ms = until.timestamp() * 1000
-    
-    # since는 int(시작 타임스탬프)
-    current_since = since
-    
-    while current_since < until_ts_ms:
-        try:
-            # API 호출 전에 지연 시간 추가
-            time.sleep(0.1) 
-            
-            # API 호출
-            ohlcv = exchange.fetch_ohlcv(symbol, timeframe, current_since, limit=200)  # 최대 200개
-            
-            if not ohlcv:
-                break
-            
-            # 조회 기간을 초과하는 데이터는 제거
-            ohlcv = [data for data in ohlcv if data[0] <= until_ts_ms]
-            if not ohlcv:
-                break
-
-            all_data.extend(ohlcv)
-            current_since = ohlcv[-1][0] + 1  # 마지막 데이터의 타임스탬프를 기준으로 다음 데이터 요청
-        except Exception as e:
-            # 오류 발생 시 경고 출력 및 루프 중단
-            st.warning(f"Error fetching {symbol}: {e}. Stopping data fetch for this symbol.")
-            break
-            
-    return all_data
-
-if fixed_ratio:
-    # 코인/종목 코드 입력 필드 (디폴트 값 ETH, SOL 반영)
-    col_code1, col_code2, col_code3 = st.columns(3)
-    with col_code1:
-        code1 = st.text_input('자산코드 1', value='ETH', placeholder='코드입력 - (예시)ETH')
-    with col_code2:
-        code2 = st.text_input('자산코드 2', value='SOL', placeholder='코드입력 - (예시)SOL')
-    with col_code3:
-        code3 = st.text_input('자산코드 3', value='', placeholder='코드입력 - (예시)XRP')
-
-    # 업비트 모듈 초기화
-    upbit = ccxt.upbit()
-
-    # 입력된 종목 코드 리스트
-    codes = [code1.strip().upper(), code2.strip().upper(), code3.strip().upper()]
-    codes = [code for code in codes if code]  # 빈 코드 제거
-
-    # 날짜 변환 (datetime.date → datetime.datetime)
-    try:
-        start_datetime = datetime.datetime.combine(start_date, datetime.datetime.min.time())
-        end_datetime = datetime.datetime.combine(end_date, datetime.datetime.max.time())
-    except NameError:
-        st.error("start_date와 end_date가 상위 코드에서 정의되지 않았습니다.")
-        st.stop()
-    
-    # ccxt API 호출을 위한 타임스탬프
-    start_timestamp_ms = int(start_datetime.timestamp() * 1000)
-    
-    # === 체크박스 레이아웃: 3 컬럼, 2줄 ===
-    
-    # 1행: USD/BTC, KRW/BTC, SPY/BTC
-    col_cb1, col_cb2, col_cb3 = st.columns(3)
-    with col_cb1:
-        add_usd = st.checkbox("USD/BTC(달러)")
-    with col_cb2:
-        add_krw = st.checkbox("KRW/BTC(원화)")
-    with col_cb3:
-        add_apartment = st.checkbox("SPY/BTC(S&P500)")
-        
-    # 2행: QQQ/BTC, EWY/BTC, GLD/BTC
-    col_cb4, col_cb5, col_cb6 = st.columns(3)
-    with col_cb4:
-        add_qqq = st.checkbox("QQQ/BTC(NASDAQ)")
-    with col_cb5:
-        add_ewy = st.checkbox("EWY/BTC(KOREA)") # 신규 EWY 체크박스
-    with col_cb6:
-        add_gld = st.checkbox("GLD/BTC(GOLD)") # 신규 GLD 체크박스
+        add_gld = st.checkbox("GLD/BTC(GOLD)", key="add_gld_key") # Key 추가
 
     # 기준시점 수익률 비교 차트 생성
     ohlcv_data = {}
@@ -986,7 +504,7 @@ st.markdown("---")
 #시가총액 비율 기능
 
 # 'BTC 시가총액 비율' 체크박스
-show_market_cap_chart = st.checkbox("Bitcoin 시가총액 비율")
+show_market_cap_chart = st.checkbox("Bitcoin 시가총액 비율", key="market_cap_key") # Key 추가
 
 if show_market_cap_chart:
     cg = CoinGeckoAPI()
@@ -1127,7 +645,7 @@ st.markdown("---")
 
 #####################################
 # '김치프리미엄' 체크박스 추가
-show_kimchi_premium = st.checkbox("김치프리미엄 보기")
+show_kimchi_premium = st.checkbox("김치프리미엄 보기", key="kimchi_key") # Key 추가
 
 
 # 환율 가져오기 함수 (현재 환율)
@@ -1274,7 +792,7 @@ def fetch_usdt_krw_upbit():
     return [{"date": item["candle_date_time_utc"], "price": item["trade_price"]} for item in data]
 
 # 'USDT 가격변화' 체크박스
-show_usdt_chart = st.checkbox("USDT 가격변화")
+show_usdt_chart = st.checkbox("USDT 가격변화", key="usdt_key") # Key 추가
 
 if show_usdt_chart:
     try:
@@ -1340,6 +858,7 @@ if show_usdt_chart:
 
 
 #####################################
+
 #
 
 
