@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import requests
 import ccxt
 import matplotlib.ticker as ticker
+import time # API 호출 지연을 위해 time 모듈 추가
 
 # 서비스 제목 입력
 st.markdown("<h2 style='font-size: 30px; text-align: center;'>다빈치 BITCOIN 분석 서비스</h2>", unsafe_allow_html=True)
@@ -176,7 +177,7 @@ def fetch_full_ohlcv(exchange, symbol, timeframe, since, until):
     return all_data
 
 if fixed_ratio:
-    # 코인/종목 코드 입력 필드
+    # 코인/종목 코드 입력 필드 (디폴트 값 ETH, SOL 반영)
     col_code1, col_code2, col_code3 = st.columns(3)
     with col_code1:
         code1 = st.text_input('자산코드 1', value='ETH', placeholder='코드입력 - (예시)ETH')
@@ -359,7 +360,8 @@ if show_market_cap_chart:
         end_date = datetime.datetime.now()
         start_date = end_date - datetime.timedelta(days=365)
 
-        # 상위 암호화폐 시가총액 가져오기 (최신 데이터)
+        # 1. 상위 암호화폐 시가총액 가져오기 (최신 데이터) - API 호출 1
+        time.sleep(1) # API 지연 추가
         top_coins = cg.get_coins_markets(vs_currency='usd', order='market_cap_desc', per_page=100, page=1)
         if not top_coins:
             raise ValueError("상위 암호화폐 데이터를 가져오는 데 실패했습니다.")
@@ -420,12 +422,11 @@ if show_market_cap_chart:
         ax.set_title('Market Cap Distribution(Now)', fontsize=title_font_size)
         st.pyplot(fig)
 
-        # 365일 전부터 현재까지 BTC 도미넌스 데이터 가져오기
+        # 2. 365일 전부터 현재까지 BTC 도미넌스 데이터 가져오기 - API 호출 2
         start_timestamp = int(start_date.timestamp())
         end_timestamp = int(end_date.timestamp())
-        # CoinGecko API에는 도미넌스 자체 데이터가 없어, BTC 시가총액 데이터를 가져와서 계산해야 함.
-        # 기존 코드는 'market_caps'만 가져왔으나, 글로벌 시가총액 데이터가 부족하여 정확한 도미넌스 추이가 어려울 수 있음.
-        # 여기서는 코드가 원래 의도한대로 BTC의 market_caps를 가져오는 부분만 유지합니다.
+        
+        time.sleep(1) # API 지연 추가
         btc_dominance_data = cg.get_coin_market_chart_range_by_id(
             id='bitcoin',
             vs_currency='usd',
@@ -433,10 +434,7 @@ if show_market_cap_chart:
             to_timestamp=end_timestamp
         )
 
-        # 도미넌스 데이터 처리 (Note: 이 부분은 CoinGecko API의 한계로 인해
-        # 과거 전체 암호화폐 시총 데이터가 없어, BTC 시총 데이터를 비율처럼 그리는 형태로 보입니다.
-        # 차트 레이블을 'BTC Market Cap (USD)'로 수정하는 것이 더 정확할 수 있으나,
-        # 원본 코드의 의도를 최대한 유지하여 진행합니다.)
+        # 도미넌스 데이터 처리 
         dominance_dates = [datetime.datetime.fromtimestamp(price[0] / 1000) for price in btc_dominance_data['market_caps']]
         
         # 이 부분은 현재 시점의 global_market_cap으로 나눠서 과거 도미넌스를 추정하는 방식이라 정확하지 않지만,
@@ -467,10 +465,7 @@ if show_market_cap_chart:
         plt.xticks(rotation=45, fontsize=axis_font_size)  # X축 날짜를 대각선으로 표시
         st.pyplot(fig) # <<-- 꺾은선 그래프 출력 (두 번째 차트)
 
-        # ----------------------------------------------------------------------
         # [수정된 위치]: 꺾은선 그래프 (두 번째 차트) 바로 아래로 이동
-        # ----------------------------------------------------------------------
-        
         # [추가] 글로벌 Gold 시가총액 출력 (고정값의 이름 사용)
         st.write(f"{gold_asset_name} (USD): {int(global_gold_market_cap):,} (USD)")
         
@@ -498,6 +493,8 @@ show_kimchi_premium = st.checkbox("김치프리미엄 보기")
 # CoinGecko에서 USDT/USD 데이터를 가져오는 함수 (100일)
 @st.cache_data(ttl=3600)  # 데이터를 1시간 동안 캐싱
 def fetch_usdt_prices_cg():
+    # CoinGecko API 호출 전에 지연 시간 추가
+    time.sleep(1) 
     url = "https://api.coingecko.com/api/v3/coins/tether/market_chart"
     params = {
         "vs_currency": "usd",
@@ -531,14 +528,15 @@ if show_kimchi_premium:
             end_date_hist = datetime.datetime.now()
             start_date_hist = end_date_hist - datetime.timedelta(days=100)
 
-            # 업비트 데이터 가져오기
+            # 업비트 데이터 가져오기 (ccxt는 자체적으로 호출 지연 처리가 있을 수 있으나, 안전을 위해 time.sleep 추가는 생략)
             since = int(start_date_hist.timestamp() * 1000)
             upbit_data = upbit.fetch_ohlcv("BTC/KRW", timeframe="1d", since=since)
             upbit_df = pd.DataFrame(upbit_data, columns=["timestamp", "open", "high", "low", "close", "volume"])
             upbit_df["Date"] = pd.to_datetime(upbit_df["timestamp"], unit="ms")
             upbit_df.set_index("Date", inplace=True)
 
-            # 코인게코 데이터를 가져오기
+            # 코인게코 데이터를 가져오기 (API 호출 전에 지연 추가)
+            time.sleep(1)
             btc_market_data = cg.get_coin_market_chart_range_by_id(
                 id="bitcoin",
                 vs_currency="usd",
@@ -605,6 +603,8 @@ st.markdown("---")
 # CoinGecko에서 USDT/USD 데이터를 가져오는 함수 (100일)
 @st.cache_data(ttl=3600)  # 데이터를 1시간 동안 캐싱
 def fetch_usdt_prices_cg():
+    # CoinGecko API 호출 전에 지연 시간 추가
+    time.sleep(1) 
     url = "https://api.coingecko.com/api/v3/coins/tether/market_chart"
     params = {
         "vs_currency": "usd",
