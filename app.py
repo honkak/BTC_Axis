@@ -202,11 +202,11 @@ if fixed_ratio:
     # 코인/종목 코드 입력 필드 (디폴트 값 ETH, SOL 반영)
     col_code1, col_code2, col_code3 = st.columns(3)
     with col_code1:
-        code1 = st.text_input('자산코드 1', value='ETH', placeholder='코드입력 - (예시)ETH')
+        code1 = st.text_input('코인코드 1', value='ETH', placeholder='코드입력 - (예시)ETH')
     with col_code2:
-        code2 = st.text_input('자산코드 2', value='SOL', placeholder='코드입력 - (예시)SOL')
+        code2 = st.text_input('코인코드 2', value='SOL', placeholder='코드입력 - (예시)SOL')
     with col_code3:
-        code3 = st.text_input('자산코드 3', value='', placeholder='코드입력 - (예시)XRP')
+        code3 = st.text_input('코인코드 3', value='', placeholder='코드입력 - (예시)XRP')
 
     # 업비트 모듈 초기화
     upbit = ccxt.upbit()
@@ -242,7 +242,7 @@ if fixed_ratio:
     with col_cb4:
         add_qqq = st.checkbox("QQQ/BTC(NASDAQ)", key="add_qqq_key") # Key 추가
     with col_cb5:
-        add_ewy = st.checkbox("EWY/BTC(KOREA)", key="add_ewy_key") # Key 추가
+        add_ewy = st.checkbox("EWY/BTC(KOSPI)", key="add_ewy_key") # Key 추가
     with col_cb6:
         add_gld = st.checkbox("GLD/BTC(GOLD)", key="add_gld_key") # Key 추가
 
