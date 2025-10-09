@@ -33,7 +33,7 @@ with col_end_date:
 # 시작 날짜와 종료 날짜 비교
 if start_date > end_date:
     st.warning("시작일이 종료일보다 더 늦습니다. 날짜를 자동으로 맞바꿔 반영합니다.")
-    start_date, end_date = end_date, start_date  # 날짜를 바꿈
+    start_date, end_date = end_date, start_date # 날짜를 바꿈
 
 # 수평선 추가
 st.markdown("---")
@@ -179,9 +179,9 @@ if fixed_ratio:
     # 코인/종목 코드 입력 필드
     col_code1, col_code2, col_code3 = st.columns(3)
     with col_code1:
-        code1 = st.text_input('자산코드 1', value='', placeholder='코드입력 - (예시)ETH')
+        code1 = st.text_input('자산코드 1', value='ETH', placeholder='코드입력 - (예시)ETH')
     with col_code2:
-        code2 = st.text_input('자산코드 2', value='', placeholder='코드입력 - (예시)SOL')
+        code2 = st.text_input('자산코드 2', value='SOL', placeholder='코드입력 - (예시)SOL')
     with col_code3:
         code3 = st.text_input('자산코드 3', value='', placeholder='코드입력 - (예시)XRP')
 
@@ -401,18 +401,9 @@ if show_market_cap_chart:
         st.write(f"Global Crypto Market Cap (USD): {int(global_market_cap):,} (USD)")
         st.write(f"Bitcoin Market Cap (USD): {int(btc_market_cap):,} (USD)")
         
-        # Bitcoin Dominance: 붉은색으로 출력 요청 반영
+        # Bitcoin Dominance: 붉은색으로 출력 요청 반영 (1차 차트 위의 도미넌스)
         st.markdown(
             f"<p style='font-size: 16px;'><span style='color: red;'>Bitcoin Dominance(vs other Coin): <b>{btc_dominance:.2f}%</b></span></p>", 
-            unsafe_allow_html=True
-        )
-
-        # [추가] 글로벌 Gold 시가총액 출력 (고정값의 이름 사용)
-        st.write(f"{gold_asset_name} (USD): {int(global_gold_market_cap):,} (USD)")
-        
-        # [수정] BTC vs Gold 시가총액 비율을 'Bitcoin Dominance (vs Gold): X%' 형식으로 붉은색 출력
-        st.markdown(
-            f"<p style='font-size: 16px; color: red;'>Bitcoin Dominance (vs Gold): <b>{btc_vs_gold_ratio:.2f}%</b></p>", 
             unsafe_allow_html=True
         )
 
@@ -474,7 +465,20 @@ if show_market_cap_chart:
         ax.grid(True)
         ax.legend(fontsize=font_size)
         plt.xticks(rotation=45, fontsize=axis_font_size)  # X축 날짜를 대각선으로 표시
-        st.pyplot(fig)
+        st.pyplot(fig) # <<-- 꺾은선 그래프 출력 (두 번째 차트)
+
+        # ----------------------------------------------------------------------
+        # [수정된 위치]: 꺾은선 그래프 (두 번째 차트) 바로 아래로 이동
+        # ----------------------------------------------------------------------
+        
+        # [추가] 글로벌 Gold 시가총액 출력 (고정값의 이름 사용)
+        st.write(f"{gold_asset_name} (USD): {int(global_gold_market_cap):,} (USD)")
+        
+        # [수정] BTC vs Gold 시가총액 비율을 'Bitcoin Dominance (vs Gold): X%' 형식으로 붉은색 출력
+        st.markdown(
+            f"<p style='font-size: 16px; color: red;'>Bitcoin Dominance (vs Gold): <b>{btc_vs_gold_ratio:.2f}%</b></p>", 
+            unsafe_allow_html=True
+        )
 
     except Exception as e:
         st.error(f"암호화폐 데이터를 불러오는 데 실패했습니다: {e}")
